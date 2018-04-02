@@ -14,14 +14,11 @@ print('Size of dataset:')
 print('Training size:{}'.format(len(data.train.labels)))
 print('Test size:{}'.format(len(data.test.labels)))
 print('Validation size:{}'.format(len(data.validation.labels)))
-# print(type(data.train.labels))
 
-# check one hot encoding
-# print(data.test.labels[:5,:])
 
 # store label as column vector
 data.test.cls = np.array([label.argmax() for label in data.test.labels])
-# print(data.test.cls[:5])
+
 
 # validation labels
 data.validation.cls = np.array([label.argmax() for label in data.validation.labels])
@@ -33,11 +30,7 @@ num_classes = 10
 learning_rate = 0.005
 
 # function for plotting image
-
-# print(data.train.images[:1,:].shape)
-
 def plot_image(images, true_class):
-
     # img_len = np.array(len(images))
     # plot_shape = np.reshape(img_len, [-1, 4])
     fig, axes = plt.subplots(3, 4)
@@ -51,9 +44,6 @@ def plot_image(images, true_class):
 
     plt.show()
     return
-
-
-# plot_image(data.test.images[:12,:], data.test.cls[:12])
 
 
 # Tensorflow computational graph
@@ -80,16 +70,13 @@ with tf.name_scope('prediction'):
     # get the predicted class for each sample using argmax
     y_pred_cls = tf.argmax(y_pred, axis=1)
 
-
 with tf.name_scope('cost'):
     entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y)
     cost = tf.reduce_mean(entropy)
     tf.summary.scalar('cost', cost)
 
-
 with tf.name_scope('train'):
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
-
 
 with tf.name_scope('accuracy'):
     # prformance measures
@@ -100,13 +87,11 @@ with tf.name_scope('accuracy'):
 
 # Confusion matrix definition
 def plot_confusion_matrix(sess, true_class, dict_):
-
     predicted_class = sess.run(y_pred_cls, feed_dict=dict_)
 
     cm = confusion_matrix(y_true=true_class, y_pred=predicted_class)
 
     print('confusion matrix for MNIST data:{}'.format(cm))
-
 
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.tight_layout()
@@ -117,14 +102,12 @@ def plot_confusion_matrix(sess, true_class, dict_):
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.show()
-
     return
+
 
 # plot weights to visualize the optimization and structure of weights learned with time.
 def plot_weights(sess):
-
     w = sess.run(weights)
-
     w_min = np.min(w)
     w_max = np.max(w)
 
@@ -137,14 +120,12 @@ def plot_weights(sess):
         ax.imshow(image, vmin=w_min, vmax=w_max, cmap='seismic')
         ax.set_xticks([])
         ax.set_yticks([])
-
     plt.show()    
-
     return
+
 
 # define cost and accuracy plotting function
 def plot_cost_accuracy(cost, accuracy):
-
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.plot(cost)
     ax1.set_xlabel('Training steps')
@@ -154,7 +135,6 @@ def plot_cost_accuracy(cost, accuracy):
     ax2.set_ylabel('Accuracy')
 
     plt.show()
-
     return
 
 
@@ -214,9 +194,7 @@ def training(is_confusion_matrix=False, is_plot_weights=False, is_plot_cost_accu
         # plot cost and accuracy graph
         if is_plot_cost_accuracy:
             plot_cost_accuracy(avg_cost, avg_accuracy)
-
     return
-
 
 
 def main():
@@ -242,9 +220,6 @@ def main():
             test_accuracy.append(cal_accuracy)
             test_cost.append(cal_cost)
             count +=1
-
-        # print confusion matrix for validation data
-        # plot_confusion_matrix(session, data.validation.cls, feed_dict_val)
 
     # print cost and accuracy calulated for validation data  
     print("Test Accuracy:{0} ".format(np.sum(test_accuracy) / count)) 
