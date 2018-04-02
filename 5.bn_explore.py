@@ -29,7 +29,7 @@ with tf.name_scope('layer_1'):
     b1 = tf.Variable(tf.zeros([100]))
     
     z1 = tf.matmul(x, w1) + b1
-    l1 = tf.nn.relu(z1)
+    l1 = tf.nn.tanh(z1)
     
     tf.summary.histogram('w1', w1)
     tf.summary.histogram('z1', z1)
@@ -58,7 +58,7 @@ with tf.name_scope('layer_1_BN'):
     # Scale and shift to obtain the final output of the batch normalization
     # this value is fed into the activation function (here a sigmoid)
     BN1 = scale1 * z1_hat + beta1
-    l1_BN = tf.nn.relu(BN1)
+    l1_BN = tf.nn.tanh(BN1)
 
     tf.summary.histogram('w1_BN', w1_BN)
     tf.summary.histogram('BN1', BN1)
@@ -71,7 +71,7 @@ with tf.name_scope('layer_2'):
     b2 = tf.Variable(tf.zeros([100]))
     
     z2 = tf.matmul(l1, w2) + b2
-    l2 = tf.nn.relu(z2)
+    l2 = tf.nn.tanh(z2)
     
     tf.summary.histogram('w2', w2)
     tf.summary.histogram('z2', z2)
@@ -90,7 +90,7 @@ with tf.name_scope('layer_2_BN'):
 
     BN2 = tf.nn.batch_normalization(z2_BN, batch_mean2, batch_var2, beta2, scale2, epsilon)
 
-    l2_BN = tf.nn.relu(BN2)
+    l2_BN = tf.nn.tanh(BN2)
 
     tf.summary.histogram('w2_BN', w1_BN)
     tf.summary.histogram('BN2', BN2)
@@ -171,10 +171,10 @@ def training():
                 zs.append(np.mean(res[2],axis=0))
                 BNs.append(np.mean(res[3],axis=0))
                 print('Steps: {2}, Accuracy with BN: {1} and without BN: {1}'.format(res[0], res[1], i)) 
-            if i % 5000 == 0:
-                saver.save(session, os.path.join(LOGDIR, "model.ckpt"), i)
                 writer.add_summary(s, i)
-
+            if i % 10000 == 0:
+                saver.save(session, os.path.join(LOGDIR, "model.ckpt"), i)
+                
     zs, BNs, acc, acc_BN = np.array(zs), np.array(BNs), np.array(acc), np.array(acc_BN)
     return zs, BNs, acc, acc_BN
 
