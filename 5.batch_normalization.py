@@ -189,23 +189,3 @@ ax.set_title('Batch Normalization Accuracy')
 ax.legend(loc=4)
 plt.show()
 
-
-# visualize the effect of neurons in 2nd layer
-fig, axes = plt.subplots(5, 2, figsize=(6,12))
-fig.tight_layout()
-
-for i, ax in enumerate(axes.flat):
-    ax[0].set_title("Without BN")
-    ax[1].set_title("With BN")
-    ax[0].plot(zs[:,i])
-    ax[1].plot(BNs[:,i])
-
-    plt.show()
-
-
-
-
-
-
-
-

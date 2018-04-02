@@ -207,7 +207,7 @@ def plot_bn_effect(zs, BNs):
         ax[0].plot(zs[:,i])
         ax[1].plot(BNs[:,i])
         plt.show()
-
+        return
 
 def main():
     logit, BN_logit, accuracy, BN_accuracy = training()
@@ -217,6 +217,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
 
