@@ -194,7 +194,7 @@ plt.show()
 fig, axes = plt.subplots(5, 2, figsize=(6,12))
 fig.tight_layout()
 
-for i, ax in enumerate(axes):
+for i, ax in enumerate(axes.flat):
     ax[0].set_title("Without BN")
     ax[1].set_title("With BN")
     ax[0].plot(zs[:,i])
