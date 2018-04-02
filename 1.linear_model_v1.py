@@ -26,9 +26,6 @@ num_classes = 10
 learning_rate = 0.005
 
 # function for plotting image
-
-# print(data.train.images[:1,:].shape)
-
 def plot_image(images, true_class):
 
     # img_len = np.array(len(images))
@@ -49,7 +46,6 @@ def plot_image(images, true_class):
 # plot_image(data.test.images[:12,:], data.test.cls[:12])
 
 
-# Tensorflow computational graph
 # reset tf graph
 tf.reset_default_graph()
 
@@ -85,13 +81,11 @@ feed_dict_test = {X: data.test.images,
 
 # Confusion matrix definition
 def print_confusion_matrix(sess, true_class):
-
     predicted_class = sess.run(y_pred_cls, feed_dict=feed_dict_test)
 
     cm = confusion_matrix(y_true=true_class, y_pred=predicted_class)
 
     print('confusion matrix for MNIST data:{}'.format(cm))
-
 
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.tight_layout()
@@ -105,9 +99,9 @@ def print_confusion_matrix(sess, true_class):
 
     return
 
+
 # plot weights to visualize the optimization and structure of weights learned with time.
 def plot_weights(sess):
-
     w = sess.run(weights)
 
     w_min = np.min(w)
@@ -122,14 +116,12 @@ def plot_weights(sess):
         ax.imshow(image, vmin=w_min, vmax=w_max, cmap='seismic')
         ax.set_xticks([])
         ax.set_yticks([])
-
     plt.show()    
-
     return
+
 
 # define cost and accuracy plotting function
 def plot_cost_accuracy(cost, accuracy):
-
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.plot(cost)
     ax1.set_xlabel('Training steps')
@@ -145,7 +137,6 @@ def plot_cost_accuracy(cost, accuracy):
 
 # start training process
 def training(dict_test, is_confusion_matrix=False, is_plot_weights=False, is_plot_cost_accuracy=False):
-
     avg_cost = []
     avg_accuracy = []
     epochs = 3
@@ -182,8 +173,8 @@ def training(dict_test, is_confusion_matrix=False, is_plot_weights=False, is_plo
             plot_cost_accuracy(avg_cost, avg_accuracy)
 
     session.close()
-
     return
+
 
 # check training status
 training(feed_dict_test)
