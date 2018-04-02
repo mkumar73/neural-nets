@@ -260,7 +260,6 @@ def training(is_confusion_matrix=False, is_plot_weights=False, is_plot_cost_accu
     return
 
 
-
 def main():
     # check training status
     # training()
