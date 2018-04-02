@@ -21,12 +21,8 @@ print('Validation size:\t{}'.format(len(data.validation.labels)))
 print('Train image shape:\t', data.train.images[1].shape)
 print('Validation image shape:\t', data.validation.images[1].shape)
 
-# check one hot encoding
-# print(data.test.labels[:5,:])
-
 # store label as column vector
 data.test.cls = np.array([label.argmax() for label in data.test.labels])
-# print(data.test.cls[:5])
 
 # validation labels
 data.validation.cls = np.array([label.argmax() for label in data.validation.labels])
@@ -34,7 +30,6 @@ data.validation.cls = np.array([label.argmax() for label in data.validation.labe
 
 # function for plotting image
 def plot_image(images, true_class):
-
     fig, axes = plt.subplots(3, 4)
     for i, ax in enumerate(np.ravel(axes)):
         image = np.reshape(images[i], [image_size, image_size])
@@ -47,9 +42,6 @@ def plot_image(images, true_class):
     plt.show()
     return
 
-
-# plot_image(data.test.images[:12,:], data.test.cls[:12])
-
 # hyperparameters
 image_size = 28
 image_shape = image_size * image_size
@@ -59,9 +51,7 @@ learning_rate = 0.005
 # reset tf graph
 tf.reset_default_graph()
 
-
 # use layers API to build the network structure
-
 # Create DFG
 
 with tf.name_scope('inputs'):
@@ -75,33 +65,27 @@ with tf.name_scope('inputs'):
     print('Label shape:\t',Y.shape)
 
 
-
 with tf.name_scope('conv1'):
     conv1 = tf.layers.conv2d(inputs=X_, name='conv1', padding='same',
                        filters=16, kernel_size=3, activation=tf.nn.relu)
     tf.summary.histogram('conv1', conv1)
 
-
 with tf.name_scope('maxpool1'):
     pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=2, strides=2)
-
 
 with tf.name_scope('conv2'):
     conv2 = tf.layers.conv2d(inputs=pool1, name='conv2', padding='same',
                        filters=32, kernel_size=3, activation=tf.nn.relu)
     tf.summary.histogram('conv1', conv2)
 
-
 with tf.name_scope('maxpool2'):
     pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=2, strides=2)
-
 
 flat = tf.contrib.layers.flatten(pool2)
 
 with tf.name_scope('fc'):
     fc = tf.layers.dense(inputs=flat, name='fc', units=128, activation=tf.nn.relu)
     tf.summary.histogram('fc', fc)
-
 
 with tf.name_scope('output'):
     logits = tf.layers.dense(inputs=fc, name='output', units=10, activation=None)
@@ -119,23 +103,19 @@ with tf.name_scope('prediction'):
     # get the predicted class for each sample using argmax
     y_pred_cls = tf.argmax(y_pred, axis=1)
 
-
 with tf.name_scope('accuracy'):
     # prformance measures
     correct_prediction = tf.equal(y_pred_cls, y)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     tf.summary.scalar('accuracy', accuracy)
 
-
 with tf.name_scope('cost'):
     entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y)
     cost = tf.reduce_mean(entropy)
     tf.summary.scalar('cost', cost)
 
-
 with tf.name_scope('train'):
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
-
 
 # get weights from the layers api
 def get_weights(layer_name):
@@ -146,15 +126,13 @@ def get_weights(layer_name):
 conv1_w = get_weights(layer_name='conv1')
 conv2_w = get_weights(layer_name='conv2')
 
+
 # Confusion matrix definition
 def plot_confusion_matrix(sess, true_class, dict_):
-
     predicted_class = sess.run(y_pred_cls, feed_dict=dict_)
-
     cm = confusion_matrix(y_true=true_class, y_pred=predicted_class)
-
     print('confusion matrix for MNIST data:\n{}'.format(cm))
-
+    
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.tight_layout()
     plt.colorbar()
@@ -164,20 +142,16 @@ def plot_confusion_matrix(sess, true_class, dict_):
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.show()
-
     return
 
 
 # plot weights to visualize the optimization and structure of weights learned with time.
 def plot_weights(session, weights):
-
     w = session.run(weights)
-
     w_min = np.min(w)
     w_max = np.max(w)
 
     filters = w.shape[3]
-
     grids = math.ceil(math.sqrt(filters))
     
     # Create figure with a grid of sub-plots.
@@ -191,18 +165,14 @@ def plot_weights(session, weights):
             # print('Weights shape:', img.shape)
             ax.imshow(img, vmin=w_min, vmax=w_max,
                       interpolation='nearest', cmap='seismic')
-
         ax.set_xticks([])
         ax.set_yticks([])
-
     plt.show()    
-
     return
 
 
 # plot conv layer result to visualize the optimization and structure of conv layers.
 def plot_conv_layer(session, layer, image):
-
     dict_ = {X : [image]}
 
     conv_result = session.run(layer, feed_dict=dict_) 
@@ -219,18 +189,14 @@ def plot_conv_layer(session, layer, image):
             # print('Weights value:',img)
             # print('Weights shape:', img.shape)
             ax.imshow(img, interpolation='nearest', cmap='binary')
-
         ax.set_xticks([])
         ax.set_yticks([])
-
     plt.show()    
-
     return
 
 
 # define cost and accuracy plotting function
 def plot_cost_accuracy(cost, accuracy):
-
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.plot(cost)
     ax1.set_xlabel('Training steps')
@@ -238,9 +204,7 @@ def plot_cost_accuracy(cost, accuracy):
     ax2.plot(accuracy)
     ax2.set_xlabel('Training steps')
     ax2.set_ylabel('Accuracy')
-
     plt.show()
-
     return
 
 
@@ -269,8 +233,6 @@ def training(is_confusion_matrix=False, is_plot_cost_accuracy=False):
             x_batch, y_batch = data.train.next_batch(batch_size)
             feed_dict_train = {X: x_batch, Y: y_batch}
             cal_cost, _, s = session.run([cost, optimizer, summ], feed_dict=feed_dict_train)
-            
-            writer.add_summary(s, epoch)
 
             avg_cost.append(cal_cost)
 
@@ -287,17 +249,15 @@ def training(is_confusion_matrix=False, is_plot_cost_accuracy=False):
             
             if epoch % 500 == 0:
                 saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
-
+                writer.add_summary(s, epoch)
 
         # print confusion matrix on validation data
         if is_confusion_matrix:
-            plot_confusion_matrix(session, data.validation.cls, feed_dict_val)
-        
+            plot_confusion_matrix(session, data.validation.cls, feed_dict_val)       
 
         # plot cost and accuracy graph
         if is_plot_cost_accuracy:
             plot_cost_accuracy(avg_cost, avg_accuracy)
-
     return
 
 
@@ -329,8 +289,7 @@ def main():
         print('Second conv layer:')
         plot_conv_layer(session, conv2, img)
 
-    # check test accuracy on test data
-        
+    # check test accuracy on test data     
         test_accuracy = 0
         test_accuracy = []
         test_cost = []
