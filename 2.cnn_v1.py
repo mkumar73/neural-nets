@@ -18,10 +18,6 @@ print('Validation size:{}'.format(len(data.validation.labels)))
 
 print('Train image shape:', data.train.images[1].shape)
 print('Validation image shape:', data.validation.images[1].shape)
-# test_reshapes = data.validation.images.reshape([-1, 28, 28, 1])
-# print('test reshaped:', test_reshapes.shape)
-# check one hot encoding
-# print(data.test.labels[:5,:])
 
 # store label as column vector
 data.test.cls = np.array([label.argmax() for label in data.test.labels])
@@ -36,14 +32,9 @@ image_shape = image_size * image_size
 num_classes = 10
 learning_rate = 0.005
 
+
 # function for plotting image
-
-# print(data.train.images[:1,:].shape)
-
 def plot_image(images, true_class):
-
-    # img_len = np.array(len(images))
-    # plot_shape = np.reshape(img_len, [-1, 4])
     fig, axes = plt.subplots(3, 4)
     for i, ax in enumerate(np.ravel(axes)):
         image = np.reshape(images[i], [image_size, image_size])
@@ -52,12 +43,8 @@ def plot_image(images, true_class):
         ax.set_xlabel(xlabel)
         ax.set_xticks([])
         ax.set_yticks([])
-
     plt.show()
     return
-
-
-# plot_image(data.test.images[:12,:], data.test.cls[:12])
 
 
 # Tensorflow computational graph
@@ -66,7 +53,6 @@ tf.reset_default_graph()
 
 # define helper functions for con2d, fully connected layer and max pooling
 def conv_relu(inputs, kernel_shape, bias_shape, name='conv_layer'):
-
     with tf.variable_scope(name):
         init = tf.truncated_normal_initializer(stddev=0.01)
         weights = tf.get_variable("weights", kernel_shape, initializer=init)
@@ -77,8 +63,7 @@ def conv_relu(inputs, kernel_shape, bias_shape, name='conv_layer'):
         return tf.nn.relu(conv + biases)
 
 
-def fully_connected(x, kernelShape, name='fc'):
-    
+def fully_connected(x, kernelShape, name='fc'):   
     with tf.variable_scope(name):
         init = tf.random_normal_initializer(stddev = 0.01)
         weights = tf.get_variable("weights", kernelShape, initializer = init)
@@ -90,7 +75,6 @@ def fully_connected(x, kernelShape, name='fc'):
 
 
 def output(x, kernelShape, name='output'):
-
     with tf.variable_scope(name):
         init = tf.random_normal_initializer(stddev = 0.01)
         weights = tf.get_variable("weights", kernelShape, initializer = init)
@@ -116,7 +100,6 @@ with tf.name_scope('inputs'):
     print('Input shape:',X.shape)
     print('Label shape:',Y.shape)
 
-
 conv1 = conv_relu(X, [3, 3, 1, 16], [16], name='conv1')
 print('Conv layer 1 shape:', conv1.shape)
 
@@ -141,14 +124,7 @@ print('Output shape:', logits)
 # print all trainable variables
 for i in tf.trainable_variables():
     print(i)
-
-# with tf.name_scope('fc'):
-#     weights = tf.Variable(tf.random_normal([image_shape, num_classes], stddev=0.02),name='weights')
-#     biases = tf.Variable(tf.zeros([num_classes]), name='biases')
-#     logits = tf.matmul(X, weights) + biases
-#     tf.summary.histogram("weights", weights)
-#     tf.summary.histogram("biases", biases)
-#     tf.summary.histogram("logits", logits)
+    
 
 with tf.name_scope('prediction'):
     # normalize the probabolity value so sum upto 1 for each row.
