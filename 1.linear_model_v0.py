@@ -10,8 +10,8 @@ print('Size of dataset:')
 print('Training size:{}'.format(len(data.train.labels)))
 print('Test size:{}'.format(len(data.test.labels)))
 print('Validation size:{}'.format(len(data.validation.labels)))
-# print(type(data.train.labels))
 
+# print(type(data.train.labels))
 # check one hot encoding
 # print(data.test.labels[:5,:])
 
@@ -26,9 +26,6 @@ num_classes = 10
 learning_rate = 0.0005
 
 # function for plotting image
-
-# print(data.train.images[:1,:].shape)
-
 def plot_image(images, true_class):
 
     # img_len = np.array(len(images))
