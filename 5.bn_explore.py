@@ -13,12 +13,10 @@ import os
 mnist = input_data.read_data_sets("data/MNIST/", one_hot=True)
 LOGDIR = "graphs/bn/explore"
 
-
 # Placeholders
 with tf.name_scope('input'):
     x = tf.placeholder(tf.float32, shape=[None, 784])
     y_ = tf.placeholder(tf.float32, shape=[None, 10])
-
 
 # Hyper parameters
 # Small epsilon value for the BN transform
@@ -147,76 +145,78 @@ with tf.name_scope('accuracy_BN'):
     tf.summary.scalar('with BN', accuracy_BN)
 
 # training the network
-zs, BNs, acc, acc_BN = [], [], [], []
+def training():
+    zs, BNs, acc, acc_BN = [], [], [], []
 
-init = tf.global_variables_initializer()
+    init = tf.global_variables_initializer()
 
-with tf.Session() as session:
-    
-    session.run(init)
-
-    # merge all summaries
-    summ = tf.summary.merge_all()
-
-    # write the summaries
-    writer = tf.summary.FileWriter(LOGDIR, session.graph)
-
-    # save the model for future use
-    saver = tf.train.Saver()
-    
-    print('Training in progress.......')
-    
-    for i in range(10001):
-        batch = mnist.train.next_batch(100)
+    with tf.Session() as session:
         
-        _, _, s = session.run([train_step, train_step_BN, summ], feed_dict={x: batch[0], y_: batch[1]})
+        session.run(init)
+        # merge all summaries
+        summ = tf.summary.merge_all()
+        # write the summaries
+        writer = tf.summary.FileWriter(LOGDIR, session.graph)
+        # save the model for future use
+        saver = tf.train.Saver()
         
-        dict_ = {x: mnist.test.images, y_: mnist.test.labels}
+        print('Training in progress.......')     
+        for i in range(10001):
+            batch = mnist.train.next_batch(100)
+            _, _, s = session.run([train_step, train_step_BN, summ], feed_dict={x: batch[0], y_: batch[1]})    
+            dict_ = {x: mnist.test.images, y_: mnist.test.labels}
 
-        if i % 1000 is 0:
-            res = session.run([accuracy,accuracy_BN,z2,BN2],feed_dict=dict_)
-            acc.append(res[0])
-            acc_BN.append(res[1])
-            zs.append(np.mean(res[2],axis=0)) # record the mean value of z2 over the entire test set
-            BNs.append(np.mean(res[3],axis=0)) # record the mean value of BN2 over the entire test set
-            print('Steps: {2}, Accuracy with BN: {1} and without BN: {1}'.format(res[0], res[1], i))
-        
-        if i % 5000 == 0:
-            saver.save(session, os.path.join(LOGDIR, "model.ckpt"), i)
-            writer.add_summary(s, i)
+            if i % 1000 is 0:
+                res = session.run([accuracy,accuracy_BN,z2,BN2],feed_dict=dict_)
+                acc.append(res[0])
+                acc_BN.append(res[1])
+                zs.append(np.mean(res[2],axis=0)) # record the mean value of z2 over the entire test set
+                BNs.append(np.mean(res[3],axis=0)) # record the mean value of BN2 over the entire test set
+                print('Steps: {2}, Accuracy with BN: {1} and without BN: {1}'.format(res[0], res[1], i)) 
+            if i % 5000 == 0:
+                saver.save(session, os.path.join(LOGDIR, "model.ckpt"), i)
+                writer.add_summary(s, i)
 
-zs, BNs, acc, acc_BN = np.array(zs), np.array(BNs), np.array(acc), np.array(acc_BN)
+    zs, BNs, acc, acc_BN = np.array(zs), np.array(BNs), np.array(acc), np.array(acc_BN)
+    return zs, BNs, acc, acc_BN
 
 
 # plot the result
-fig, ax = plt.subplots()
+def plot_result(acc, acc_BN):
+    fig, ax = plt.subplots()
 
-ax.plot(range(0,len(acc)*50,50),acc, label='Without BN')
-ax.plot(range(0,len(acc)*50,50),acc_BN, label='With BN')
-ax.set_xlabel('Training steps')
-ax.set_ylabel('Accuracy')
-ax.set_ylim([0.8,1])
-ax.set_title('Batch Normalization Accuracy')
-ax.legend(loc=4)
-plt.show()
+    ax.plot(range(0,len(acc)*50,50),acc, label='Without BN')
+    ax.plot(range(0,len(acc)*50,50),acc_BN, label='With BN')
+    ax.set_xlabel('Training steps')
+    ax.set_ylabel('Accuracy')
+    ax.set_ylim([0.8,1])
+    ax.set_title('Batch Normalization Accuracy')
+    ax.legend(loc=4)
+    plt.show()
+    return
 
 
 # visualize the effect of neurons in 2nd layer
-fig, axes = plt.subplots(5, 2, figsize=(6,12))
-fig.tight_layout()
+def plot_bn_effect(zs, BNs):
+    fig, axes = plt.subplots(5, 2, figsize=(6,12))
+    fig.tight_layout()
 
-for i, ax in enumerate(axes):
-    ax[0].set_title("Without BN")
-    ax[1].set_title("With BN")
-    ax[0].plot(zs[:,i])
-    ax[1].plot(BNs[:,i])
-
-    plt.show()
-
-
+    for i, ax in enumerate(axes.flat):
+        ax[0].set_title("Without BN")
+        ax[1].set_title("With BN")
+        ax[0].plot(zs[:,i])
+        ax[1].plot(BNs[:,i])
+        plt.show()
 
 
+def main():
+    logit, BN_logit, accuracy, BN_accuracy = training()
+    plot_result(accuracy, BN_accuracy)
+    plot_bn_effect(logit, BN_logit)
 
+
+if __name__ == '__main__':
+    main()
 
 
 
