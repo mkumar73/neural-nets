@@ -180,11 +180,10 @@ with tf.Session() as session:
             zs.append(np.mean(res[2],axis=0)) # record the mean value of z2 over the entire test set
             BNs.append(np.mean(res[3],axis=0)) # record the mean value of BN2 over the entire test set
             print('Steps: {2}, Accuracy with BN: {1} and without BN: {1}'.format(res[0], res[1], i))
-
-            writer.add_summary(s, i)
         
         if i % 5000 == 0:
-                saver.save(session, os.path.join(LOGDIR, "model.ckpt"), i)
+            saver.save(session, os.path.join(LOGDIR, "model.ckpt"), i)
+            writer.add_summary(s, i)
 
 zs, BNs, acc, acc_BN = np.array(zs), np.array(BNs), np.array(acc), np.array(acc_BN)
 
