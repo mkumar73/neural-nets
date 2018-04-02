@@ -124,7 +124,7 @@ print('Output shape:', logits)
 # print all trainable variables
 for i in tf.trainable_variables():
     print(i)
-    
+
 
 with tf.name_scope('prediction'):
     # normalize the probabolity value so sum upto 1 for each row.
@@ -248,14 +248,13 @@ def training(is_confusion_matrix=False, is_plot_weights=False, is_plot_cost_accu
                                   Y: data.validation.labels}
                 cal_accuracy = session.run(accuracy, feed_dict=feed_dict_val)
                 avg_accuracy.append(cal_accuracy)
-                writer.add_summary(s, epoch)
 
                 print('Cost after {0} steps:{1}'.format(epoch, cal_cost))
                 print('Accuracy after {0} steps:{1}'.format(epoch, cal_accuracy))
             
             if epoch % 500 == 0:
                 saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
-
+                writer.add_summary(s, epoch)
 
         # print confusion matrix on validation data
         if is_confusion_matrix:
