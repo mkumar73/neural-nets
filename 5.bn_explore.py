@@ -25,10 +25,10 @@ lr = 0.01
 
 # Layer 1 without BN
 with tf.name_scope('layer_1'):
-    w1 = tf.Variable(tf.random_normal([784, 100]))
+    w1 = tf.Variable(tf.random_normal([784, 100], stddev=0.01))
     b1 = tf.Variable(tf.zeros([100]))
     
-    z1 = tf.matmul(x,w1)+b1
+    z1 = tf.matmul(x, w1) + b1
     l1 = tf.nn.relu(z1)
     
     tf.summary.histogram('w1', w1)
@@ -38,7 +38,7 @@ with tf.name_scope('layer_1'):
 
 # Layer 1 with BN
 with tf.name_scope('layer_1_BN'):    
-    w1_BN = tf.Variable(tf.random_normal([784, 100]))
+    w1_BN = tf.Variable(tf.random_normal([784, 100], stddev=0.01))
 
     # Note that pre-batch normalization bias is ommitted. The effect of this bias would be
     # eliminated when subtracting the batch mean. Role of the bias is performed
@@ -67,7 +67,7 @@ with tf.name_scope('layer_1_BN'):
 
 # Layer 2 without BN
 with tf.name_scope('layer_2'):
-    w2 = tf.Variable(tf.random_normal([100, 100]))
+    w2 = tf.Variable(tf.random_normal([100, 100], stddev=0.01))
     b2 = tf.Variable(tf.zeros([100]))
     
     z2 = tf.matmul(l1, w2) + b2
@@ -80,7 +80,7 @@ with tf.name_scope('layer_2'):
 
 # Layer 2 with BN, using Tensorflows built-in BN function
 with tf.name_scope('layer_2_BN'):    
-    w2_BN = tf.Variable(tf.random_normal([100, 100]))
+    w2_BN = tf.Variable(tf.random_normal([100, 100], stddev=0.01))
     z2_BN = tf.matmul(l1_BN, w2_BN)
 
     batch_mean2, batch_var2 = tf.nn.moments(z2_BN, [0])
@@ -98,7 +98,7 @@ with tf.name_scope('layer_2_BN'):
 
 # Softmax
 with tf.name_scope('logits'):
-    w3 = tf.Variable(tf.random_normal([100, 10]))
+    w3 = tf.Variable(tf.random_normal([100, 10], stddev=0.01))
     b3 = tf.Variable(tf.zeros([10]))
 
     logits = tf.matmul(l2, w3) + b3
@@ -109,7 +109,7 @@ with tf.name_scope('logits'):
 
 
 with tf.name_scope('logits_BN'):    
-    w3_BN = tf.Variable(tf.random_normal([100, 10]))
+    w3_BN = tf.Variable(tf.random_normal([100, 10], stddev=0.01))
     b3_BN = tf.Variable(tf.zeros([10]))
 
     logits_BN = tf.matmul(l2_BN, w3_BN) + b3_BN
@@ -147,11 +147,9 @@ with tf.name_scope('accuracy_BN'):
 # training the network
 def training():
     zs, BNs, acc, acc_BN = [], [], [], []
-
+    
     init = tf.global_variables_initializer()
-
-    with tf.Session() as session:
-        
+    with tf.Session() as session:    
         session.run(init)
         # merge all summaries
         summ = tf.summary.merge_all()
@@ -170,8 +168,8 @@ def training():
                 res = session.run([accuracy,accuracy_BN,z2,BN2],feed_dict=dict_)
                 acc.append(res[0])
                 acc_BN.append(res[1])
-                zs.append(np.mean(res[2],axis=0)) # record the mean value of z2 over the entire test set
-                BNs.append(np.mean(res[3],axis=0)) # record the mean value of BN2 over the entire test set
+                zs.append(np.mean(res[2],axis=0))
+                BNs.append(np.mean(res[3],axis=0))
                 print('Steps: {2}, Accuracy with BN: {1} and without BN: {1}'.format(res[0], res[1], i)) 
             if i % 5000 == 0:
                 saver.save(session, os.path.join(LOGDIR, "model.ckpt"), i)
@@ -201,7 +199,7 @@ def plot_bn_effect(zs, BNs):
     fig, axes = plt.subplots(5, 2, figsize=(6,12))
     fig.tight_layout()
 
-    for i, ax in enumerate(axes.flat):
+    for i, ax in enumerate(axes):
         ax[0].set_title("Without BN")
         ax[1].set_title("With BN")
         ax[0].plot(zs[:,i])
