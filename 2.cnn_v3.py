@@ -16,17 +16,12 @@ print('Size of dataset:')
 print('Training size:{}'.format(len(data.train.labels)))
 print('Test size:{}'.format(len(data.test.labels)))
 print('Validation size:{}'.format(len(data.validation.labels)))
-# print(type(data.train.labels))
 
 print('Train image shape:', data.train.images[1].shape)
 print('Validation image shape:', data.validation.images[1].shape)
 
-# check one hot encoding
-# print(data.test.labels[:5,:])
-
 # store label as column vector
 data.test.cls = np.array([label.argmax() for label in data.test.labels])
-# print(data.test.cls[:5])
 
 # validation labels
 data.validation.cls = np.array([label.argmax() for label in data.validation.labels])
@@ -37,10 +32,8 @@ image_shape = image_size * image_size
 num_classes = 10
 learning_rate = 0.005
 
+
 # function for plotting image
-
-# print(data.train.images[:1,:].shape)
-
 def plot_image(images, true_class):
 
     fig, axes = plt.subplots(3, 4)
@@ -55,15 +48,11 @@ def plot_image(images, true_class):
     plt.show()
     return
 
-
-# plot_image(data.test.images[:12,:], data.test.cls[:12])
-
 # reset tf graph
 tf.reset_default_graph()
 
 # define helper functions for con2d, fully connected layer and max pooling
 def conv_relu(inputs, kernel_shape, bias_shape, name='conv_layer', is_weights=False):
-
     with tf.variable_scope(name):
         init = tf.truncated_normal_initializer(stddev=0.01)
         weights = tf.get_variable("weights", kernel_shape, initializer=init)
@@ -78,7 +67,6 @@ def conv_relu(inputs, kernel_shape, bias_shape, name='conv_layer', is_weights=Fa
 
 
 def fully_connected(x, kernel_shape, name='fc', is_relu=False):
-    
     with tf.variable_scope(name):
         init = tf.random_normal_initializer(stddev = 0.01)
         weights = tf.get_variable("weights", kernel_shape, initializer = init)
@@ -93,7 +81,6 @@ def fully_connected(x, kernel_shape, name='fc', is_relu=False):
 
 
 def output(x, kernel_shape, name='output'):
-
     with tf.variable_scope(name):
         init = tf.random_normal_initializer(stddev = 0.01)
         weights = tf.get_variable("weights", kernel_shape, initializer = init)
@@ -161,16 +148,13 @@ with tf.name_scope('prediction'):
     # get the predicted class for each sample using argmax
     y_pred_cls = tf.argmax(y_pred, axis=1)
 
-
 with tf.name_scope('cost'):
     entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y)
     cost = tf.reduce_mean(entropy)
     tf.summary.scalar('cost', cost)
 
-
 with tf.name_scope('train'):
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
-
 
 with tf.name_scope('accuracy'):
     # prformance measures
@@ -181,13 +165,11 @@ with tf.name_scope('accuracy'):
 
 # Confusion matrix definition
 def plot_confusion_matrix(sess, true_class, dict_):
-
     predicted_class = sess.run(y_pred_cls, feed_dict=dict_)
 
     cm = confusion_matrix(y_true=true_class, y_pred=predicted_class)
 
     print('confusion matrix for MNIST data:\n{}'.format(cm))
-
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.tight_layout()
     plt.colorbar()
@@ -197,25 +179,20 @@ def plot_confusion_matrix(sess, true_class, dict_):
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.show()
-
     return
 
 
 # plot weights to visualize the optimization and structure of weights learned with time.
 def plot_weights(session, weights):
-
     w = session.run(weights)
-
     w_min = np.min(w)
     w_max = np.max(w)
 
     filters = w.shape[3]
-
     grids = math.ceil(math.sqrt(filters))
     
     # Create figure with a grid of sub-plots.
     fig, axes = plt.subplots(grids, grids)
-
     # Plot all the filter-weights.
     for i, ax in enumerate(axes.flat):
         if i<filters:
@@ -224,18 +201,14 @@ def plot_weights(session, weights):
             # print('Weights shape:', img.shape)
             ax.imshow(img, vmin=w_min, vmax=w_max,
                       interpolation='nearest', cmap='seismic')
-
         ax.set_xticks([])
         ax.set_yticks([])
-
     plt.show()    
-
     return
 
 
 # plot conv layer result to visualize the optimization and structure of conv layers.
 def plot_conv_layer(session, layer, image):
-
     img = np.reshape(image, (28, 28, 1))
     dict_ = {X : [img]}
 
@@ -256,15 +229,12 @@ def plot_conv_layer(session, layer, image):
 
         ax.set_xticks([])
         ax.set_yticks([])
-
     plt.show()    
-
     return
 
 
 # define cost and accuracy plotting function
 def plot_cost_accuracy(cost, accuracy):
-
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.plot(cost)
     ax1.set_xlabel('Training steps')
@@ -272,9 +242,7 @@ def plot_cost_accuracy(cost, accuracy):
     ax2.plot(accuracy)
     ax2.set_xlabel('Training steps')
     ax2.set_ylabel('Accuracy')
-
     plt.show()
-
     return
 
 
@@ -305,8 +273,6 @@ def training(is_confusion_matrix=False, is_plot_cost_accuracy=False):
             feed_dict_train = {X: x_batch, Y: y_batch}
             cal_cost, _, s = session.run([cost, optimizer, summ], feed_dict=feed_dict_train)
             
-            writer.add_summary(s, epoch)
-
             avg_cost.append(cal_cost)
 
             # check accuracy on validation set, by chance i have tested on test data so
@@ -323,7 +289,7 @@ def training(is_confusion_matrix=False, is_plot_cost_accuracy=False):
             
             if epoch % 500 == 0:
                 saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
-
+                writer.add_summary(s, epoch)
 
         # print confusion matrix on validation data
         if is_confusion_matrix:
