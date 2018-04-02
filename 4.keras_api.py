@@ -13,7 +13,6 @@ from keras.optimizers import Adam
 from tensorflow.examples.tutorials.mnist import input_data
 data = input_data.read_data_sets("data/MNIST/", one_hot=True)
 
-
 LOGDIR = "graphs/keras/model.keras"
 
 print('Size of dataset:')
@@ -25,126 +24,11 @@ print('Validation size:\t{}'.format(len(data.validation.labels)))
 print('Train image shape:\t', data.train.images[1].shape)
 print('Validation image shape:\t', data.validation.images[1].shape)
 
-# check one hot encoding
-# print(data.test.labels[:5,:])
-
 # store label as column vector
 data.test.cls = np.array([label.argmax() for label in data.test.labels])
-# print(data.test.cls[:5])
 
 # validation labels
 data.validation.cls = np.array([label.argmax() for label in data.validation.labels])
-
-
-# function for plotting image
-def plot_image(images, true_class):
-
-    fig, axes = plt.subplots(3, 4)
-    for i, ax in enumerate(np.ravel(axes)):
-        image = np.reshape(images[i], [image_size, image_size])
-        ax.imshow(image, cmap='binary')
-        xlabel = 'True class:{}'.format(true_class[i])
-        ax.set_xlabel(xlabel)
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    plt.show()
-    return
-
-
-# Confusion matrix definition
-def plot_confusion_matrix(sess, true_class, dict_):
-
-    predicted_class = sess.run(y_pred_cls, feed_dict=dict_)
-
-    cm = confusion_matrix(y_true=true_class, y_pred=predicted_class)
-
-    print('confusion matrix for MNIST data:\n{}'.format(cm))
-
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
-    plt.tight_layout()
-    plt.colorbar()
-    tick_marks = np.arange(num_classes)
-    plt.xticks(tick_marks, range(num_classes))
-    plt.yticks(tick_marks, range(num_classes))
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
-    plt.show()
-    return
-
-
-# plot weights to visualize the optimization and structure of weights learned with time.
-def plot_weights(session, weights):
-
-    w = session.run(weights)
-
-    w_min = np.min(w)
-    w_max = np.max(w)
-
-    filters = w.shape[3]
-
-    grids = math.ceil(math.sqrt(filters))
-    
-    # Create figure with a grid of sub-plots.
-    fig, axes = plt.subplots(grids, grids)
-
-    # Plot all the filter-weights.
-    for i, ax in enumerate(axes.flat):
-        if i<filters:
-            img = w[:, :, 0, i]
-            # print('Weights value:',img)
-            # print('Weights shape:', img.shape)
-            ax.imshow(img, vmin=w_min, vmax=w_max,
-                      interpolation='nearest', cmap='seismic')
-
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    plt.show()    
-    return
-
-
-# plot conv layer result to visualize the optimization and structure of conv layers.
-def plot_conv_layer(session, layer, image):
-
-    dict_ = {X : [image]}
-
-    conv_result = session.run(layer, feed_dict=dict_) 
-    filters = conv_result.shape[3]
-    grids = math.ceil(math.sqrt(filters))
-    
-    # Create figure with a grid of sub-plots.
-    fig, axes = plt.subplots(grids, grids)
-
-    # Plot all the filter-weights.
-    for i, ax in enumerate(axes.flat):
-        if i<filters:
-            img = conv_result[0, :, :, i]
-            # print('Weights value:',img)
-            # print('Weights shape:', img.shape)
-            ax.imshow(img, interpolation='nearest', cmap='binary')
-
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    plt.show()    
-    return
-
-
-# define cost and accuracy plotting function
-def plot_cost_accuracy(cost, accuracy):
-
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.plot(cost)
-    ax1.set_xlabel('Training steps')
-    ax1.set_ylabel('Cost')
-    ax2.plot(accuracy)
-    ax2.set_xlabel('Training steps')
-    ax2.set_ylabel('Accuracy')
-
-    plt.show()
-    return
-
 
 # hyperparameters
 image_size = 28
