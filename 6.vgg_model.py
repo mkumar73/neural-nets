@@ -104,6 +104,7 @@ for i, ax in enumerate(np.reshape(axs, [-1])):
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
     ax.set_title(label[i])
+    # plt.show()
 
 
 # Construction phase
@@ -165,7 +166,7 @@ def output(x, kernel_shape, name='output'):
 
 def max_pooling(conv, name='pooling'):
     with tf.variable_scope(name):
-    return tf.nn.max_pool(conv, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],padding='SAME')
+    	return tf.nn.max_pool(conv, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 
 with tf.name_scope('input'):
@@ -227,73 +228,104 @@ with tf.name_scope('accuracy'):
 
 # declare training parameters
 training_steps = svhn.get_sizes()[0] // mini_batch_size
-training_entropies = np.zeros(training_steps * epochs)
-validation_entropies = np.zeros(training_steps * epochs)
-
-training_accuracies = np.ones(training_steps * epochs)
-validation_accuracies = np.ones(training_steps * epochs)
+training_entropies = []
+validation_entropies = []
+training_accuracies = []
+validation_accuracies = []
 
 # training
-
 def training():
-	init = tf.global_variables_initializer()
 
+	init = tf.global_variables_initializer()
 	with tf.Session() as session:
-	    session.run(init)
+		session.run(init)
 
 	    # merge all summaries
-        summ = tf.summary.merge_all()
+		summ = tf.summary.merge_all()
         # write the summaries
-        writer = tf.summary.FileWriter(LOGDIR, session.graph)
+		writer = tf.summary.FileWriter(LOGDIR, session.graph)
         # save the model for future use
-        saver = tf.train.Saver()
+		saver = tf.train.Saver()
 	    
-	    step = 0
-	    last_step = False
-	    for epoch in range(epochs):
-	        for images, labels in svhn.get_training_batch(mini_batch_size):
-	            session.run(optimizer,feed_dict = {X: images, Y: labels})
-	            training_entropies[step], training_accuracies[step], s = session.run(
-	                                                        [entropy, accuracy, summ], feed_dict = {X: images, Y: labels})
-	            
-	            if step == (training_steps * epochs)-1:
-	                last_step = True
-	            
-	            if step % plot_step_size == 0 or last_step:
-	                images, labels = next(svhn.get_validation_batch(0))
-	                
-	                validation_entropy, validation_accuracy = session.run(
-	                    [entropy, accuracy], feed_dict = {X: images, Y: labels})
-	                
-	                writer.add_summary(s, step)
-	                
-	                if step != 0:
-	                    on = step - plot_step_size if not last_step else step - plot_step_size + 1
-	                    off = on + plot_step_size
-	                    validation_entropies[on:off] = [validation_entropy] * plot_step_size
-	                    validation_accuracies[on:off] = [validation_accuracy] * plot_step_size
-	            
-	            if step % 100 == 0:     
-	                print('Iterations: {2}, Train Acc:{0}, Train entropy: {1} '.format(training_accuracies[step], 
-	                                                                                       training_entropies[step], step))
-	            
-	            step += 1
-	        saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
-	        print('Epoch: {2}, Train Acc:{0}, Train entropy: {1} '.format(np.mean(training_accuracies), 
-	                                                                                       np.mean(training_entropies), epoch))
-	        print('Epoch: {2}, Validation Acc:{0}, Validation entropy: {1} '.format(np.mean(validation_accuracy), 
-	                                                                                       np.mean(validation_entropy), epoch))
+		step = 0
+		last_step = False
+		for epoch in range(epochs):
+			for images, labels in svhn.get_training_batch(mini_batch_size):
+				dict_ = {X: images, Y: labels}
+				_, s = session.run([optimizer, summ],feed_dict=dict_)
+				t_cost, t_acc = session.run([cost, accuracy], feed_dict=dict_)
 
-	        return
+				training_entropies.append(t_cost)
+				training_accuracies.append(t_acc)
+
+				if step == (training_steps * epochs)-1:
+					last_step = True
+	            
+				if step % plot_step_size == 0 or last_step:
+					images, labels = next(svhn.get_validation_batch(0))
+					dict_val = {X: images, Y: labels}
+					v_cost, v_acc = session.run([cost, accuracy], feed_dict=dict_val)
+					
+					validation_entropies.append(v_cost)
+					validation_accuracies.append(v_acc)
+					writer.add_summary(s, step)
+
+				if step % 100 == 0:
+					print('Iterations:{2}, Train Acc:{0}, Train cost:{1} '.format(t_acc, t_cost, step))
+	            
+				step += 1
+			saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
+			print('Epoch:{2}, Train Acc:{0}, Train cost:{1} '.format(np.mean(training_accuracies), np.mean(training_entropies), epoch))
+			print('Epoch:{2}, Validation Acc:{0}, Validation cost:{1} '.format(np.mean(validation_accuracies), np.mean(validation_entropies), epoch))
+	
+	return training_entropies, training_accuracies, validation_entropies, validation_accuracies
+
+
+# plot training results in the graph
+def plot_result(t_acc, t_cost, v_acc, v_cost):
+	fig_entropy, ax_entropy = plt.subplots()
+	fig_entropy.suptitle("Cross Entropy")
+
+	fig_accuracy, ax_accuracy = plt.subplots()
+	fig_accuracy.suptitle("Accuracy")
+
+	ax_entropy.cla()
+	ax_entropy.plot(training_entropies, label = "Training data")
+	ax_entropy.plot(validation_entropies, label = "Validation data")
+	ax_entropy.set_xlabel("Training Step")
+	ax_entropy.set_ylabel("Entropy")
+	ax_entropy.legend()
+	fig_entropy.canvas.draw()
+
+	ax_accuracy.cla()
+	ax_accuracy.plot(training_accuracies, label = "Training data")
+	ax_accuracy.plot(validation_accuracies, label = "Validation data")
+	ax_accuracy.set_xlabel("Training Step")
+	ax_accuracy.set_ylabel("Accuracy in %")
+	ax_accuracy.legend()
+	fig_accuracy.canvas.draw()
+
+	plt.show()
+	return
+
 
 # main program
 def main():
-	training()
+	t_cost, t_acc, v_cost, v_acc = training()
+	plot_result(t_acc, t_cost, v_acc, v_cost)
+
+	with tf.Session() as session:
+	    saver = tf.train.Saver()
+	    saver.restore(session, tf.train.latest_checkpoint(LOGDIR))
+	    
+	    test_accuracy = 0
+	    for step, (images, labels) in enumerate(svhn.get_test_batch(300)):
+	        test_accuracy += session.run(accuracy, feed_dict = {X: images, Y: labels})
+    
+	print("Test Accuracy: " + str(test_accuracy / step))
 
 
 # start
 if __name__ == '__main__':
 	main()
-
-
 
