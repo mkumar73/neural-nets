@@ -175,6 +175,125 @@ with tf.name_scope('input'):
 print('X shape:\t',X.shape)
 print('Y shape:\t',Y.shape)
 
+conv1 = conv_relu(X, [3, 3, 1, 8], [8], name='conv1')   
+tf.summary.histogram('conv1', conv1)
+
+conv2 = conv_relu(conv1, [3, 3, 8, 16], [16], name='conv2')
+tf.summary.histogram('conv2', conv2)
+
+maxpool1 = max_pooling(conv2, name='pool1')
+
+conv3 = conv_relu(maxpool1, [3, 3, 16, 32], [32], name='conv3')
+tf.summary.histogram('conv3', conv3)
+
+conv4 = conv_relu(conv3, [3, 3, 32, 64], [64], name='conv4')
+tf.summary.histogram('conv4', conv4)
+
+maxpool2 = max_pooling(conv4, name='maxpool2')
+
+# reshape maxpool2 to fit the fully connected layer
+fc_ip = tf.reshape(maxpool2, [-1, 8*8*64])
+print(fc_ip.shape)
+
+fc = fully_connected(fc_ip, [8*8*64,128], name='fc')
+tf.summary.histogram('fc', fc)
+
+logits = output(fc, [128, 10], name='output')
+
+for i in tf.trainable_variables():
+    print(i)
+
+#define hyperparameter
+LEARNING_RATE = 0.001
+epochs = 3
+mini_batch_size = 300
+plot_step_size = 50
+
+# define loss and accuracy
+with tf.name_scope('loss'):
+    entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=Y, logits=logits)
+    cost = tf.reduce_mean(entropy, name='cost')
+    tf.summary.scalar('cost', cost)
+    
+with tf.name_scope('train'):
+    # using Adam optimizer with learning rate of LEARNING_RATE to minimize cost
+    optimizer = tf.train.AdamOptimizer(LEARNING_RATE).minimize(cost)
+
+with tf.name_scope('accuracy'):
+    prediction = tf.equal(tf.argmax(tf.nn.softmax(logits), 1), Y)
+    accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
+    tf.summary.scalar('accuracy', accuracy)
+    
+
+# declare training parameters
+training_steps = svhn.get_sizes()[0] // mini_batch_size
+training_entropies = np.zeros(training_steps * epochs)
+validation_entropies = np.zeros(training_steps * epochs)
+
+training_accuracies = np.ones(training_steps * epochs)
+validation_accuracies = np.ones(training_steps * epochs)
+
+# training
+
+def training():
+	init = tf.global_variables_initializer()
+
+	with tf.Session() as session:
+	    session.run(init)
+
+	    # merge all summaries
+        summ = tf.summary.merge_all()
+        # write the summaries
+        writer = tf.summary.FileWriter(LOGDIR, session.graph)
+        # save the model for future use
+        saver = tf.train.Saver()
+	    
+	    step = 0
+	    last_step = False
+	    for epoch in range(epochs):
+	        for images, labels in svhn.get_training_batch(mini_batch_size):
+	            session.run(optimizer,feed_dict = {X: images, Y: labels})
+	            training_entropies[step], training_accuracies[step], s = session.run(
+	                                                        [entropy, accuracy, summ], feed_dict = {X: images, Y: labels})
+	            
+	            if step == (training_steps * epochs)-1:
+	                last_step = True
+	            
+	            if step % plot_step_size == 0 or last_step:
+	                images, labels = next(svhn.get_validation_batch(0))
+	                
+	                validation_entropy, validation_accuracy = session.run(
+	                    [entropy, accuracy], feed_dict = {X: images, Y: labels})
+	                
+	                writer.add_summary(s, step)
+	                
+	                if step != 0:
+	                    on = step - plot_step_size if not last_step else step - plot_step_size + 1
+	                    off = on + plot_step_size
+	                    validation_entropies[on:off] = [validation_entropy] * plot_step_size
+	                    validation_accuracies[on:off] = [validation_accuracy] * plot_step_size
+	            
+	            if step % 100 == 0:     
+	                print('Iterations: {2}, Train Acc:{0}, Train entropy: {1} '.format(training_accuracies[step], 
+	                                                                                       training_entropies[step], step))
+	            
+	            step += 1
+	        saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
+	        print('Epoch: {2}, Train Acc:{0}, Train entropy: {1} '.format(np.mean(training_accuracies), 
+	                                                                                       np.mean(training_entropies), epoch))
+	        print('Epoch: {2}, Validation Acc:{0}, Validation entropy: {1} '.format(np.mean(validation_accuracy), 
+	                                                                                       np.mean(validation_entropy), epoch))
+
+	        return
+
+# main program
+def main():
+	training()
+
+
+# start
+if __name__ == '__main__':
+	main()
 
 
 
