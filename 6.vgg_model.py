@@ -97,3 +97,84 @@ image, label = next(svhn.get_training_batch(25))
 print('Size of training batch images:',image.shape)
 print('Labels of training batch images:',label)
 
+# plot the images to investigate
+fig, axs = plt.subplots(3, 4)
+for i, ax in enumerate(np.reshape(axs, [-1])):
+    ax.imshow(image[i,:,:,0], cmap='gray')
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_title(label[i])
+
+
+# Construction phase
+# reset all variables if necessary
+tf.reset_default_graph()
+
+# utility functions
+# define con_relu and max pooling to simplify the process
+variance_epsilon = 1e-3
+init = tf.random_normal_initializer(stddev = 0.01)
+init_conv = tf.truncated_normal_initializer(stddev=0.01)
+
+
+def batch_norm(inputs, is_training):
+    scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
+    beta = tf.Variable(tf.zeros([inputs.get_shape()[-1]]))
+    pop_mean = tf.Variable(tf.zeros([inputs.get_shape()[-1]]), trainable=False)
+    pop_var = tf.Variable(tf.ones([inputs.get_shape()[-1]]), trainable=False)
+
+    if is_training:
+        batch_mean, batch_var = tf.nn.moments(inputs,[0])
+
+        return tf.nn.batch_normalization(inputs,
+            batch_mean, batch_var, beta, scale, variance_epsilon)
+    else:
+        return tf.nn.batch_normalization(inputs,
+            pop_mean, pop_var, beta, scale, variance_epsilon)
+
+
+def conv_relu(inputs, kernel_shape, bias_shape, name='conv'):
+    # Create variable named "weights".
+	with tf.variable_scope(name):
+	    weights = tf.get_variable("weights", kernel_shape, initializer=init_conv)
+
+	    # Create variable named "biases".
+	    biases = tf.get_variable("biases", bias_shape, initializer=init_conv)
+	    
+	    conv = tf.nn.conv2d(inputs, weights,
+	        strides=[1, 1, 1, 1], padding='SAME')
+	    conv_bn = batch_norm(conv, is_training=True)
+	    return tf.nn.relu(conv_bn + biases)
+
+
+def fully_connected(x, kernel_shape, name='fc'):
+	with tf.variable_scope(name):
+	    weights = tf.get_variable("weights", kernel_shape, initializer=init)
+	    biases = tf.get_variable("biases", [kernel_shape[-1]], initializer=init)
+	    fc = tf.matmul(x, weights)
+	    fc = batch_norm(fc, is_training=True)
+	    return tf.nn.tanh(fc + biases)
+
+
+def output(x, kernel_shape, name='output'):
+	with tf.variable_scope(name):
+	    weights = tf.get_variable("weights", kernel_shape, initializer=init)
+	    biases = tf.get_variable("biases", [kernel_shape[-1]], initializer=init)
+	    return tf.matmul(x, weights) + biases
+
+
+def max_pooling(conv, name='pooling'):
+    with tf.variable_scope(name):
+    return tf.nn.max_pool(conv, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],padding='SAME')
+
+
+with tf.name_scope('input'):
+    X = tf.placeholder(tf.float32, shape = [None, 32,32,1])
+    Y = tf.placeholder(tf.int64, [None])
+
+print('X shape:\t',X.shape)
+print('Y shape:\t',Y.shape)
+
+
+
+
