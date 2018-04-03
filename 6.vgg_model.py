@@ -190,7 +190,7 @@ tf.summary.histogram('conv3', conv3)
 conv4 = conv_relu(conv3, [3, 3, 32, 64], [64], name='conv4')
 tf.summary.histogram('conv4', conv4)
 
-maxpool2 = max_pooling(conv4, name='maxpool2')
+maxpool2 = max_pooling(conv4, name='pool2')
 
 # reshape maxpool2 to fit the fully connected layer
 fc_ip = tf.reshape(maxpool2, [-1, 8*8*64])
