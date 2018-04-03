@@ -275,8 +275,10 @@ def training():
 	            
 				step += 1
 			saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
-			print('Epoch:{2}, Train Acc:{0}, Train cost:{1} '.format(np.mean(training_accuracies), np.mean(training_entropies), epoch))
-			print('Epoch:{2}, Validation Acc:{0}, Validation cost:{1} '.format(np.mean(validation_accuracies), np.mean(validation_entropies), epoch))
+			print('Epoch:{2}, Train Acc:{0}, Train cost:{1} '.format(np.mean(training_accuracies), \
+																np.mean(training_entropies), epoch))
+			print('Epoch:{2}, Validation Acc:{0}, Validation cost:{1} '.format(np.mean(validation_accuracies),\
+			 													np.mean(validation_entropies), epoch))
 	
 	return training_entropies, training_accuracies, validation_entropies, validation_accuracies
 
