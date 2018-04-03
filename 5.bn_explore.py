@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import os
 
 mnist = input_data.read_data_sets("data/MNIST/", one_hot=True)
-LOGDIR = "graphs/bn/explore"
+LOGDIR = "../logs/bn/explore"
 
 # Placeholders
 with tf.name_scope('input'):
