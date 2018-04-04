@@ -112,13 +112,13 @@ label_to_word = {
     9: "Truck"
 }
 
-fig, axs = plt.subplots(3, 5)
-for i, ax in enumerate(np.reshape(axs, [-1])):
-    ax.imshow(images[i])
-    ax.xaxis.set_visible(False)
-    ax.yaxis.set_visible(False)
-    ax.set_title(str(labels[i]) + ": " + label_to_word[labels[i]])
-    plt.show()
+# fig, axs = plt.subplots(3, 5)
+# for i, ax in enumerate(np.reshape(axs, [-1])):
+#     ax.imshow(images[i])
+#     ax.xaxis.set_visible([])
+#     ax.yaxis.set_visible([])
+#     ax.set_title(str(labels[i]) + ": " + label_to_word[labels[i]])
+#     plt.show()
 
 
 # Construction phase
