@@ -1,4 +1,5 @@
 # In this session we are implementing VGG achitecture for SVHN dataset
+# Only the small portion of network will be implemented for demonstration and experiment purpose.
 
 import tensorflow as tf
 import matplotlib.pyplot as plt

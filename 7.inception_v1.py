@@ -1,25 +1,25 @@
-# In this session we are implementing VGG achitecture for SVHN dataset
+# In this session we are implementing Inception achitecture on CIFAR-10 dataset.
+# Only the small portion of network will be implemented for demonstration and experiment purpose.
 
 import tensorflow as tf
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy.io as scio
-import struct
+import matplotlib.pyplot as plt
+import pickle
 import os
 
-DATADIR = "../data/svhn/"
-LOGDIR = "../logs/vgg/"
+DATADIR = "../data/cifar/"
+LOGDIR = "../logs/inceptionV1/"
 
 
 # Helper class for data preprocessing
-class SVHN():
-    def __init__(self, directory = "/data"):
+class CIFAR():
+    def __init__(self, directory = "./"):
         self._directory = directory
         
-        self._training_data = np.array([])
-        self._training_labels = np.array([])
-        self._test_data = np.array([])
-        self._test_labels = np.array([])
+        self._training_data = []
+        self._training_labels = []
+        self._test_data = []
+        self._test_labels = []
         
         self._load_traing_data()
         self._load_test_data()
@@ -33,29 +33,29 @@ class SVHN():
         self._validation_labels = self._training_labels[random_indices]
         self._training_data = np.delete(self._training_data, random_indices, axis = 0)
         self._training_labels = np.delete(self._training_labels, random_indices)
-    
+        
     
     def _load_traing_data(self):
-        self._training_data, self._training_labels = self._load_data("train_32x32.mat")        
+        for i in range(1, 6):
+            path = os.path.join(self._directory, "data_batch_" + str(i))
+            with open(path, 'rb') as fd:
+                cifar_data = pickle.load(fd, encoding = "bytes")
+                imgs = cifar_data[b"data"].reshape([-1, 3, 32, 32])
+                imgs = imgs.transpose([0, 2, 3, 1])
+                if i == 1:
+                    self._training_data = imgs
+                    self._training_labels = cifar_data[b"labels"]
+                else:
+                    self._training_data = np.concatenate([self._training_data, imgs], axis = 0)
+                    self._training_labels = np.concatenate([self._training_labels, cifar_data[b"labels"]])
     
     def _load_test_data(self):
-        self._test_data, self._test_labels = self._load_data("test_32x32.mat")
-    
-    def _rgb2gray(self, rgb):
-        return np.dot(rgb[...,:3], [0.299, 0.587, 0.114])
-    
-    def _load_data(self, file):
-        path = os.path.join(self._directory, file)
-        
-        mat = scio.loadmat(path)
-        data = np.moveaxis(mat["X"], 3, 0)
-        data = self._rgb2gray(data)
-        data = data.reshape(data.shape + (1,))
-        
-        labels = mat["y"].reshape(mat["y"].shape[0])
-        labels[labels == 10] = 0
-        
-        return data, labels
+        path = os.path.join(self._directory, "test_batch")
+        with open(path, 'rb') as fd:
+            cifar_data = pickle.load(fd, encoding = "bytes")
+            imgs = cifar_data[b"data"].reshape([-1, 3, 32, 32])
+            self._test_data = imgs.transpose([0, 2, 3, 1])
+            self._test_labels = np.array(cifar_data[b"labels"])
     
     def get_training_batch(self, batch_size):
         return self._get_batch(self._training_data, self._training_labels, batch_size)
@@ -68,7 +68,6 @@ class SVHN():
     
     def _get_batch(self, data, labels, batch_size):
         samples_n = labels.shape[0]
-        
         if batch_size <= 0:
             batch_size = samples_n
         
@@ -89,22 +88,37 @@ class SVHN():
 
 
 # check data from data directory
-svhn = SVHN(DATADIR)
-print('Size of training, validation and test set:\t',svhn.get_sizes())
+cifar = CIFAR(DATADIR)
+print('Size of training, validation and test set:\t',cifar.get_sizes())
 
 # data investigation
-image, label = next(svhn.get_training_batch(25))
+image, label = next(cifar.get_training_batch(25))
 print('Size of training batch images:',image.shape)
 print('Labels of training batch images:',label)
 
 # plot the images to investigate
-fig, axs = plt.subplots(3, 4)
+images, labels = next(cifar.get_training_batch(15))
+
+label_to_word = {
+    0: "Airplane",
+    1: "Autombile",
+    2: "Bird",
+    3: "Cat",
+    4: "Deer",
+    5: "Dog",
+    6: "Frog",
+    7: "Horse",
+    8: "Ship",
+    9: "Truck"
+}
+
+fig, axs = plt.subplots(3, 5)
 for i, ax in enumerate(np.reshape(axs, [-1])):
-    ax.imshow(image[i,:,:,0], cmap='gray')
+    ax.imshow(images[i])
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
-    ax.set_title(label[i])
-    # plt.show()
+    ax.set_title(str(labels[i]) + ": " + label_to_word[labels[i]])
+    plt.show()
 
 
 # Construction phase
@@ -227,7 +241,7 @@ with tf.name_scope('accuracy'):
     
 
 # declare training parameters
-training_steps = svhn.get_sizes()[0] // mini_batch_size
+training_steps = cifar.get_sizes()[0] // mini_batch_size
 training_entropies = []
 validation_entropies = []
 training_accuracies = []
@@ -311,20 +325,21 @@ def plot_result(t_acc, t_cost, v_acc, v_cost):
 	return
 
 
-# main program
+# # main program
 def main():
-	t_cost, t_acc, v_cost, v_acc = training()
-	plot_result(t_acc, t_cost, v_acc, v_cost)
+	print('testing')
+# 	t_cost, t_acc, v_cost, v_acc = training()
+# 	plot_result(t_acc, t_cost, v_acc, v_cost)
 
-	with tf.Session() as session:
-	    saver = tf.train.Saver()
-	    saver.restore(session, tf.train.latest_checkpoint(LOGDIR))
+# 	with tf.Session() as session:
+# 	    saver = tf.train.Saver()
+# 	    saver.restore(session, tf.train.latest_checkpoint(LOGDIR))
 	    
-	    test_accuracy = 0
-	    for step, (images, labels) in enumerate(svhn.get_test_batch(300)):
-	        test_accuracy += session.run(accuracy, feed_dict = {X: images, Y: labels})
+# 	    test_accuracy = 0
+# 	    for step, (images, labels) in enumerate(svhn.get_test_batch(300)):
+# 	        test_accuracy += session.run(accuracy, feed_dict = {X: images, Y: labels})
     
-	print("Test Accuracy: " + str(test_accuracy / step))
+# 	print("Test Accuracy: " + str(test_accuracy / step))
 
 
 # start
