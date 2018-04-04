@@ -242,10 +242,10 @@ with tf.name_scope('accuracy'):
 
 # declare training parameters
 training_steps = cifar.get_sizes()[0] // mini_batch_size
-training_entropies = []
-validation_entropies = []
-training_accuracies = []
-validation_accuracies = []
+training_cost = []
+validation_cost = []
+training_accuracy = []
+validation_accuracy = []
 
 # training
 def training():
@@ -264,24 +264,24 @@ def training():
 		step = 0
 		last_step = False
 		for epoch in range(epochs):
-			for images, labels in svhn.get_training_batch(mini_batch_size):
+			for images, labels in cifar.get_training_batch(mini_batch_size):
 				dict_ = {X: images, Y: labels}
 				_, s = session.run([optimizer, summ],feed_dict=dict_)
 				t_cost, t_acc = session.run([cost, accuracy], feed_dict=dict_)
 
-				training_entropies.append(t_cost)
-				training_accuracies.append(t_acc)
+				training_cost.append(t_cost)
+				training_accuracy.append(t_acc)
 
 				if step == (training_steps * epochs)-1:
 					last_step = True
 	            
 				if step % plot_step_size == 0 or last_step:
-					images, labels = next(svhn.get_validation_batch(0))
+					images, labels = next(cifar.get_validation_batch(0))
 					dict_val = {X: images, Y: labels}
 					v_cost, v_acc = session.run([cost, accuracy], feed_dict=dict_val)
 					
-					validation_entropies.append(v_cost)
-					validation_accuracies.append(v_acc)
+					validation_cost.append(v_cost)
+					validation_accuracy.append(v_acc)
 					writer.add_summary(s, step)
 
 				if step % 100 == 0:
@@ -289,12 +289,12 @@ def training():
 	            
 				step += 1
 			saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
-			print('Epoch:{2}, Train Acc:{0}, Train cost:{1} '.format(np.mean(training_accuracies), \
-																np.mean(training_entropies), epoch))
-			print('Epoch:{2}, Validation Acc:{0}, Validation cost:{1} '.format(np.mean(validation_accuracies),\
-			 													np.mean(validation_entropies), epoch))
+			print('Epoch:{2}, Train Acc:{0}, Train cost:{1} '.format(np.mean(training_accuracy), \
+																np.mean(training_cost), epoch))
+			print('Epoch:{2}, Validation Acc:{0}, Validation cost:{1} '.format(np.mean(validation_accuracy),\
+			 													np.mean(validation_cost), epoch))
 	
-	return training_entropies, training_accuracies, validation_entropies, validation_accuracies
+	return training_cost, training_accuracy, validation_cost, validation_accuracy
 
 
 # plot training results in the graph
@@ -306,16 +306,16 @@ def plot_result(t_acc, t_cost, v_acc, v_cost):
 	fig_accuracy.suptitle("Accuracy")
 
 	ax_entropy.cla()
-	ax_entropy.plot(training_entropies, label = "Training data")
-	ax_entropy.plot(validation_entropies, label = "Validation data")
+	ax_entropy.plot(training_cost, label = "Training data")
+	ax_entropy.plot(validation_cost, label = "Validation data")
 	ax_entropy.set_xlabel("Training Step")
 	ax_entropy.set_ylabel("Entropy")
 	ax_entropy.legend()
 	fig_entropy.canvas.draw()
 
 	ax_accuracy.cla()
-	ax_accuracy.plot(training_accuracies, label = "Training data")
-	ax_accuracy.plot(validation_accuracies, label = "Validation data")
+	ax_accuracy.plot(training_accuracy, label = "Training data")
+	ax_accuracy.plot(validation_accuracy, label = "Validation data")
 	ax_accuracy.set_xlabel("Training Step")
 	ax_accuracy.set_ylabel("Accuracy in %")
 	ax_accuracy.legend()
@@ -336,7 +336,7 @@ def main():
 # 	    saver.restore(session, tf.train.latest_checkpoint(LOGDIR))
 	    
 # 	    test_accuracy = 0
-# 	    for step, (images, labels) in enumerate(svhn.get_test_batch(300)):
+# 	    for step, (images, labels) in enumerate(cifar.get_test_batch(300)):
 # 	        test_accuracy += session.run(accuracy, feed_dict = {X: images, Y: labels})
     
 # 	print("Test Accuracy: " + str(test_accuracy / step))
