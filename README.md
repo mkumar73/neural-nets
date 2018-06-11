@@ -1,2 +1,2 @@
 # neural-nets
-This repository is tutorial for basic to advanced NN structure and design patters.
+The repository contains exercises for artificial neural networks (Deep learning).
