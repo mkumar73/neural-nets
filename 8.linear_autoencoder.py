@@ -103,6 +103,8 @@ with tf.Session() as session:
 
 
 # plot the result of encoded values of test data
+# the plot looks like the PCA decomposition into two PC's 
+# that accounts for the most variation explained by the data.
 fig = plt.figure()
 plt.plot(encoding_values[:,0], encoding_values[:, 1], "b.")
 plt.xlabel("$z_1$")
