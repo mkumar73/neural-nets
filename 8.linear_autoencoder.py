@@ -118,17 +118,3 @@ plt.ylabel("loss")
 plt.show()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
