@@ -41,8 +41,33 @@ n_outputs = n_inputs # same as input
 
 learning_rate = 0.01
 
-# create the network structure
+# use L2 regularizer
+regularizer = tf.contrib.layers.l2_regularizer(l2_reg)
 
+# unit variance initializer
+initializer = tf.contrib.layers.variance_scaling_initializer()
+
+
+# create the network structure
+with tf.name_scope('input'):
+	X = tf.placeholder(tf.float32, shape=[None, n_inputs])
+
+
+with tf.name_scope('hidden_1'):
+	w1_init = initializer([n_inputs, n_hidden1])
+	weights_1 = tf.Variable(w1_init, dtype=tf.float32, name='w_1')
+	bias_1 = tf.Variable(tf.zeros([n_hidden1]), name='b_1')
+
+	logit_1 = tf.matmul(X, weights_1) + bias_1
+	a1 = tf.train.elu(logit_1)
+
+with tf.name_scope('hidden_2'):
+	w2_init = initializer([n_hidden1, n_hidden2])
+	weights_2 = tf.Variable(w2_init, dtype=tf.float32, name='w_2')
+	bias_2 = tf.Variable(tf.zeros([n_hidden2]), name='b_2')
+
+	logit_2 = tf.matmul(a1, weights_2) + bias_2
+	a2 = tf.train.elu(logit_2)
 
 
 
