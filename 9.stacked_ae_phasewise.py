@@ -1,3 +1,7 @@
+# Please check the tf version, as the tf version has been updated
+# input_data function will be deprecated in coming version 
+# use tf models to this or download the data from other sources
+
 # the stacked AE is trained in different phases
 # phase 1 - train the input and the output layer
 # phase 2 - train the hidden layer, use the learned weights from phase 1
