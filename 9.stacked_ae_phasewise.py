@@ -41,9 +41,11 @@ tf.reset_default_graph()
 n_inputs = 28 * 28
 n_hidden1 = 300 
 n_hidden2 = 150
+n_hidden3 = n_hidden1
 n_outputs = n_inputs # same as input
 
 learning_rate = 0.01
+l2_reg = 0.0005
 
 # use L2 regularizer
 regularizer = tf.contrib.layers.l2_regularizer(l2_reg)
@@ -63,7 +65,7 @@ with tf.name_scope('hidden_1'):
 	bias_1 = tf.Variable(tf.zeros([n_hidden1]), name='b_1')
 
 	logit_1 = tf.matmul(X, weights_1) + bias_1
-	a1 = tf.train.elu(logit_1)
+	a1 = tf.nn.elu(logit_1)
 
 with tf.name_scope('hidden_2'):
 	w2_init = initializer([n_hidden1, n_hidden2])
@@ -71,7 +73,39 @@ with tf.name_scope('hidden_2'):
 	bias_2 = tf.Variable(tf.zeros([n_hidden2]), name='b_2')
 
 	logit_2 = tf.matmul(a1, weights_2) + bias_2
-	a2 = tf.train.elu(logit_2)
+	a2 = tf.nn.elu(logit_2)
+
+with tf.name_scope('hidden_3'):
+	weights_3 = tf.transpose(weights_2, name='w_3')
+	bias_3 = tf.Variable(tf.zeros([n_hidden3]), name='b_3')
+
+	logit_3 = tf.matmul(a2, weights_3) + bias_3
+	a3 = tf.nn.elu(logit_3)
+
+with tf.name_scope('output'):
+	weights_4 = tf.transpose(weights_1, name='w_4')
+	bias_4 = tf.Variable(tf.zeros([n_outputs]), name='b_4')
+
+	output = tf.matmul(a3, weights_4) + bias_4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
