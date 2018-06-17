@@ -172,9 +172,9 @@ def plot_reconstructed_digits(X, output):
 def main():
 	
 	# training()
-	print('print result')
+	print('print result..')
 	plot_reconstructed_digits(X, output)
-	print('end')
+	print('** End of program.!! **')
 
 
 if __name__ == '__main__':
