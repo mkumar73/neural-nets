@@ -104,45 +104,79 @@ with tf.name_scope('optimizer'):
 	optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 
-# training network
-init = tf.global_variables_initializer()
+def training():
+	# training network
+	init = tf.global_variables_initializer()
 
-epochs = 5
-batch_size = 200
-loss_list = []
-total_loss_list = []
+	epochs = 5
+	batch_size = 200
+	loss_list = []
+	total_loss_list = []
 
-with tf.Session() as session:
-	init.run()
+	with tf.Session() as session:
+		init.run()
 
-	# merge all summaries
-	summ = tf.summary.merge_all()
+		# merge all summaries
+		summ = tf.summary.merge_all()
 
-	# write the summaries
-	writer = tf.summary.FileWriter(LOGDIR, session.graph)
-    
-	# save the model for future use
-	saver = tf.train.Saver()
+		# write the summaries
+		writer = tf.summary.FileWriter(LOGDIR, session.graph)
+	    
+		# save the model for future use
+		saver = tf.train.Saver()
 
-	for epoch in range(epochs):
-		iterations = mnist.train.num_examples // batch_size
-		
-		for iteration in range(iterations):
-			X_batch, y_batch = mnist.train.next_batch(batch_size)
-			_, s = session.run([optimizer, summ], feed_dict={X: X_batch})
-			total_loss_value, rec_loss_value = session.run([loss, reconstruction_loss], feed_dict={X: X_batch})
-
-			loss_list.append(rec_loss_value)
-			total_loss_list.append(total_loss_value)
-
-			if iteration % 100 == 0:
-				print('Reconstruction Loss: {}, epoch: {}, iteration: {}'.format(rec_loss_value, epoch+1, iteration))
-				print('Total Loss: {}, epoch: {}, iteration: {}'.format(total_loss_value, epoch+1, iteration))
-
-		if epoch==4:
-			saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
-			writer.add_summary(s, iteration)
-
+		for epoch in range(epochs):
+			iterations = mnist.train.num_examples // batch_size
 			
+			for iteration in range(iterations):
+				X_batch, y_batch = mnist.train.next_batch(batch_size)
+				_, s = session.run([optimizer, summ], feed_dict={X: X_batch})
+				total_loss_value, rec_loss_value = session.run([loss, reconstruction_loss], feed_dict={X: X_batch})
 
+				loss_list.append(rec_loss_value)
+				total_loss_list.append(total_loss_value)
+
+				if iteration % 100 == 0:
+					print('Reconstruction Loss: {}, epoch: {}, iteration: {}'.format(rec_loss_value, epoch+1, iteration))
+					print('Total Loss: {}, epoch: {}, iteration: {}'.format(total_loss_value, epoch+1, iteration))
+
+			if epoch==4:
+				saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
+				writer.add_summary(s, iteration)
+
+	return
+
+
+def plot_image(image, shape=[28, 28]):
+    plt.imshow(image.reshape(shape), cmap="Greys", interpolation="nearest")
+    plt.axis("off")
+
+
+def plot_reconstructed_digits(X, output):
+    
+	with tf.Session() as sess:
+		saver = tf.train.Saver()
+		saver.restore(sess, tf.train.latest_checkpoint(LOGDIR))
+		X_test = mnist.test.images[:2]
+		outputs_val = output.eval(feed_dict={X: X_test})
+
+	fig = plt.figure(figsize=(8, 6))
+	for digit_index in range(2):
+		plt.subplot(2, 2, digit_index * 2 + 1)
+		plot_image(X_test[digit_index])
+		plt.subplot(2, 2, digit_index * 2 + 2)
+		plot_image(outputs_val[digit_index])
+		plt.show()
+
+
+def main():
+	
+	# training()
+	print('print result')
+	plot_reconstructed_digits(X, output)
+	print('end')
+
+
+if __name__ == '__main__':
+    main()
 
