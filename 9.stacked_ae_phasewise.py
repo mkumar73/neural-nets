@@ -132,7 +132,6 @@ with tf.Session() as session:
 			_, rec_loss_value, s = session.run([optimizer, reconstruction_loss, summ], feed_dict={X: X_batch})
 			total_loss_value = session.run(loss, feed_dict={X: X_batch})
 
-
 			loss_list.append(rec_loss_value)
 			total_loss_list.append(total_loss_value)
 
@@ -141,17 +140,8 @@ with tf.Session() as session:
 
 		if epoch==4:
 			saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
-			writer.add_summary(s, epoch)
+			writer.add_summary(s, iteration)
 
-
-
-
-
-
-
-
-
-
-
+			
 
 
