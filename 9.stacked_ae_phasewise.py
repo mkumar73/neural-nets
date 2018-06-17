@@ -89,13 +89,59 @@ with tf.name_scope('output'):
 	output = tf.matmul(a3, weights_4) + bias_4
 
 
+with tf.name_scope('loss'):
+	reconstruction_loss = tf.reduce_mean(tf.square(output-X))
+	tf.summary.scalar('reconstruction_loss',reconstruction_loss)
+	
+	regularizer_loss = regularizer(weights_1) + regularizer(weights_2)
+	tf.summary.scalar('regularizer_loss',regularizer_loss)
+
+	loss = reconstruction_loss + regularizer_loss
+	tf.summary.scalar('total_loss', loss)
 
 
+with tf.name_scope('optimizer'):
+	optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 
+# training network
+init = tf.global_variables_initializer()
+
+epochs = 5
+batch_size = 200
+loss_list = []
+total_loss_list = []
+
+with tf.Session() as session:
+	init.run()
+
+	# merge all summaries
+	summ = tf.summary.merge_all()
+
+	# write the summaries
+	writer = tf.summary.FileWriter(LOGDIR, session.graph)
+    
+	# save the model for future use
+	saver = tf.train.Saver()
+
+	for epoch in range(epochs):
+		iterations = mnist.train.num_examples // batch_size
+		
+		for iteration in range(iterations):
+			X_batch, y_batch = mnist.train.next_batch(batch_size)
+			_, rec_loss_value, s = session.run([optimizer, reconstruction_loss, summ], feed_dict={X: X_batch})
+			total_loss_value = session.run(loss, feed_dict={X: X_batch})
 
 
+			loss_list.append(rec_loss_value)
+			total_loss_list.append(total_loss_value)
 
+		print('Reconstruction Loss: {}, after: {} epoch'.format(rec_loss_value, epoch+1))
+		print('Total Loss: {}, after: {} epoch'.format(total_loss_value, epoch+1))
+
+		if epoch==4:
+			saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
+			writer.add_summary(s, epoch)
 
 
 
