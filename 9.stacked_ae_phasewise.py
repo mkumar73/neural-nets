@@ -65,7 +65,7 @@ with tf.name_scope('hidden_1'):
 	bias_1 = tf.Variable(tf.zeros([n_hidden1]), name='b_1')
 
 	logit_1 = tf.matmul(X, weights_1) + bias_1
-	a1 = tf.nn.elu(logit_1)
+	a1 = tf.nn.relu(logit_1)
 
 with tf.name_scope('hidden_2'):
 	w2_init = initializer([n_hidden1, n_hidden2])
@@ -73,14 +73,14 @@ with tf.name_scope('hidden_2'):
 	bias_2 = tf.Variable(tf.zeros([n_hidden2]), name='b_2')
 
 	logit_2 = tf.matmul(a1, weights_2) + bias_2
-	a2 = tf.nn.elu(logit_2)
+	a2 = tf.nn.relu(logit_2)
 
 with tf.name_scope('hidden_3'):
 	weights_3 = tf.transpose(weights_2, name='w_3')
 	bias_3 = tf.Variable(tf.zeros([n_hidden3]), name='b_3')
 
 	logit_3 = tf.matmul(a2, weights_3) + bias_3
-	a3 = tf.nn.elu(logit_3)
+	a3 = tf.nn.relu(logit_3)
 
 with tf.name_scope('output'):
 	weights_4 = tf.transpose(weights_1, name='w_4')
@@ -129,14 +129,15 @@ with tf.Session() as session:
 		
 		for iteration in range(iterations):
 			X_batch, y_batch = mnist.train.next_batch(batch_size)
-			_, rec_loss_value, s = session.run([optimizer, reconstruction_loss, summ], feed_dict={X: X_batch})
-			total_loss_value = session.run(loss, feed_dict={X: X_batch})
+			_, s = session.run([optimizer, summ], feed_dict={X: X_batch})
+			total_loss_value, rec_loss_value = session.run([loss, reconstruction_loss], feed_dict={X: X_batch})
 
 			loss_list.append(rec_loss_value)
 			total_loss_list.append(total_loss_value)
 
-		print('Reconstruction Loss: {}, after: {} epoch'.format(rec_loss_value, epoch+1))
-		print('Total Loss: {}, after: {} epoch'.format(total_loss_value, epoch+1))
+			if iteration % 100 == 0:
+				print('Reconstruction Loss: {}, epoch: {}, iteration: {}'.format(rec_loss_value, epoch+1, iteration))
+				print('Total Loss: {}, epoch: {}, iteration: {}'.format(total_loss_value, epoch+1, iteration))
 
 		if epoch==4:
 			saver.save(session, os.path.join(LOGDIR, "model.ckpt"), epoch)
