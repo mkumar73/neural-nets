@@ -33,5 +33,22 @@ y_train, y_validation = y_train[5000:], y_train[:5000]
 # print(len(x_train), len(x_validation), len(x_test))
 # print(len(y_train), len(y_validation), len(y_test))
 
+feature_cols = [tf.feature_column.numeric_column("X", shape=[28 * 28])]
+
+dnn_clf = tf.estimator.DNNClassifier(hidden_units=[25, 25], n_classes=10,
+                                     feature_columns=feature_cols)
+
+input_fn = tf.estimator.inputs.numpy_input_fn(
+                        x={"X": x_train}, y=y_train, num_epochs=20, batch_size=50, shuffle=True)
+
+dnn_clf.train(input_fn=input_fn)
+
+
+test_input_fn = tf.estimator.inputs.numpy_input_fn(
+                                    x={"X": x_test}, y=y_test, shuffle=False)
+
+eval_results = dnn_clf.evaluate(input_fn=test_input_fn)
+
+print(eval_results)
 
 
