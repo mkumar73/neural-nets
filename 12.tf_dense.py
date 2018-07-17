@@ -101,6 +101,14 @@ class MNIST_DENSE():
 
 
     def build_network(self, session, n_h1, n_h2, n_output):
+        """
+
+        :param session:
+        :param n_h1:
+        :param n_h2:
+        :param n_output:
+        :return:
+        """
 
         X = tf.placeholder(tf.float32, shape=(None, self.image_size), name='X')
         y = tf.placeholder(tf.int64, shape=(None), name='y')
@@ -137,13 +145,15 @@ class MNIST_DENSE():
 
             print('Epoch:', epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_val)
 
-
         return
 
-with tf.Session() as session:
-    mnist = MNIST_DENSE(session, 'mnist', 28, 0.01, 64, 10)
-    mnist.build_network(session, n_h1=25, n_h2=25, n_output=10)
+
+def main():
+
+    with tf.Session() as session:
+        mnist = MNIST_DENSE(session, 'mnist', 28, 0.01, 64, 10)
+        mnist.build_network(session, n_h1=25, n_h2=25, n_output=10)
 
 
-# mnist.check_sample_data()
-
+if __name__ == '__main__':
+    main()
