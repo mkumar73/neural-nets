@@ -42,8 +42,8 @@ class MNIST_DENSE():
 
     def _data_preprocessing(self):
         """
-
-        :return:
+        private function
+        :return: processed data
         """
         self._load_data()
 
@@ -59,8 +59,8 @@ class MNIST_DENSE():
     def _train_test_split(self, _index = 5000):
         """
 
-        :param _index:
-        :return:
+        :param _index: range of trainig and validation data
+        :return: train, validation and test set
         """
         x_train, x_test, y_train, y_test = self._data_preprocessing()
 
@@ -72,10 +72,10 @@ class MNIST_DENSE():
 
     def shuffle_batch(self, x, y, batch_size):
         """
-        :param x:
-        :param y:
-        :param batch_size:
-        :return:
+        :param x: image
+        :param y: labels
+        :param batch_size: #samples in a batch
+        :return: shuffeld samples, images and labels
         """
         rnd_idx = np.random.permutation(len(x))
         n_batches = len(x) // batch_size
@@ -87,7 +87,7 @@ class MNIST_DENSE():
     def check_sample_data(self):
         """
 
-        :return:
+        :return: print something
         """
         train, val, test, _, _, _ = self._train_test_split(_index=5000)
         print('Size of train, validation and test set:\n')
@@ -103,11 +103,11 @@ class MNIST_DENSE():
     def build_network(self, session, n_h1, n_h2, n_output):
         """
 
-        :param session:
-        :param n_h1:
-        :param n_h2:
-        :param n_output:
-        :return:
+        :param session: tensorflow session
+        :param n_h1: #neurons for h1
+        :param n_h2: #neurons for h2
+        :param n_output: #neurons for output layer
+        :return: build and train the network
         """
 
         X = tf.placeholder(tf.float32, shape=(None, self.image_size), name='X')
