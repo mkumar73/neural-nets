@@ -142,6 +142,7 @@ class MNISTDENSE():
             acc_val = session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
 
             print('Epoch:', epoch, 'Batch accuracy:', acc_batch, 'Validation accuracy:', acc_val)
+            # tf.logging.info(epoch)
             # tf.logging.info(acc_batch)
             # tf.logging.info(acc_val)
 
