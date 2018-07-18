@@ -135,7 +135,7 @@ class CIFAR10():
         :param output: logit or output
         :return: activated output or logit
         """
-        with tf.name_scope(name):
+        with tf.variable_scope(name):
             if self._init == 'xavier':
                 init = tf.contrib.layers.xavier_initializer
             else:
@@ -163,7 +163,7 @@ class CIFAR10():
         :param is_weights: if weights are required for visualization
         :return: convolved result
         """
-        with tf.name_scope(name):
+        with tf.variable_scope(name):
             if self._init == 'xavier':
                 init = tf.contrib.layers.xavier_initializer
             else:
@@ -196,8 +196,6 @@ class CIFAR10():
         """
         :return:
         """
-        # reset graph
-        # tf.reset_default_graph()
 
         with tf.name_scope('input'):
             X = tf.placeholder(tf.float32, shape=[None, 32, 32, 3], name='input')
@@ -210,7 +208,7 @@ class CIFAR10():
             pool1 = self.max_pooling(conv1, name='pool1')
             tf.summary.histogram('pool1', pool1)
 
-        with tf.name_scope('conv2'):
+        with tf.name_scope('conv1'):
             conv2, conv2_w = self.conv_relu(conv1, [3, 3, 16, 32], [32], name='conv2', is_weights=True)
             tf.summary.histogram('conv2', conv2)
 
@@ -223,7 +221,6 @@ class CIFAR10():
         #
         #     pool3 = self.max_pooling(conv3, name='pool3')
         #     tf.summary.histogram('pool3', pool3)
-
         with tf.name_scope('flatten'):
             fc_input = tf.reshape(pool2, [-1, 8 * 8 * 32])
 
@@ -231,7 +228,7 @@ class CIFAR10():
             fc = self.fully_connected(fc_input, [8 * 8 * 32, 64], act_fn='relu', name='fc1', output=False)
             tf.summary.histogram('fc', fc)
 
-        with tf.name_scope('output'):
+        with tf.name_scope('logit'):
             logit = self.fully_connected(fc, [64, 10], act_fn='relu', name='output', output=True)
             tf.summary.histogram('output', logit)
 
@@ -273,15 +270,17 @@ class CIFAR10():
 
 
 def main():
+    # reset graph, if done inside tf.Session(),
+    # will break because of nested graph
+    tf.reset_default_graph()
+
     with tf.Session() as session:
-        tf.reset_default_graph()
         cifar = CIFAR10(session, 'cifar')
         # cifar.data_investigation(3, 5)
         # cifar.check_sample_data()
         cifar.build_and_train()
 
+
 if __name__ == '__main__':
     main()
-
-
 
