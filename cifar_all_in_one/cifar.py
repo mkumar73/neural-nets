@@ -13,8 +13,9 @@ We will try to use all the applicable optimization techniques as mentioned below
 
 import tensorflow as tf
 import numpy as np
-import  matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import os
+import logging
 
 
 LOGDIR = "logs/"
@@ -22,7 +23,7 @@ LOGDIR = "logs/"
 
 class CIFAR10():
 
-    def __init__(self, data='cifar'):
+    def __init__(self, data='cifar', lr=0.01, batch_size=64, epochs=5):
 
         self.data = data
 
@@ -31,9 +32,11 @@ class CIFAR10():
         :param data: dataset name
         :return: dataset and labels for training and test
         """
-
+        data.lower()
         if data=='cifar':
             (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+        else:
+            logging.error('Incorrect dataset name given')
         return x_train, y_train, x_test, y_test
 
     def check_sample_data(self):
@@ -89,7 +92,7 @@ class CIFAR10():
 
 
 cifar = CIFAR10('cifar')
-# cifar.data_investigation(3, 5)
+cifar.data_investigation(3, 5)
 
 
 

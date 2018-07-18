@@ -1,6 +1,7 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
+import logging
 
 
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
@@ -30,4 +31,4 @@ label_to_word = {
     9: "Truck"
 }
 
-print(label_to_word[int(sample_label[5])])
+logging.INFO(label_to_word[5])

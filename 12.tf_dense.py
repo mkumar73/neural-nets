@@ -5,7 +5,8 @@ using tf.layers.dense instead of contrib
 
 import tensorflow as tf
 import numpy as np
-
+import  logging
+tf.logging.set_verbosity(tf.logging.INFO)
 
 class MNISTDENSE():
 
@@ -36,7 +37,7 @@ class MNISTDENSE():
         if self.data=='mnist':
             (self.x_train, self.y_train), (self.x_test, self.y_test) = tf.keras.datasets.mnist.load_data()
         else:
-            print('Dataset error: Only implmented for MNIST as of now.!!')
+            logging.error('Dataset error: Only implmented for MNIST as of now.!!')
         return
 
     def _data_preprocessing(self):
@@ -118,7 +119,7 @@ class MNISTDENSE():
         # implement gradient clipping, it might not improve the performance
         # but its important to know the implementation technique
         with tf.name_scope('optimize'):
-            threshold = 0.75
+            threshold = 1.0
             optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
             grad_var = optimizer.compute_gradients(loss)
             clipped_grads = [(tf.clip_by_value(grad, -threshold, threshold), var)
@@ -140,7 +141,11 @@ class MNISTDENSE():
             acc_batch = session.run(accuracy, feed_dict={X: x_batch, y: y_batch})
             acc_val = session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
 
-            print('Epoch:', epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_val)
+            # tf.logging.info(print(('Epoch:', epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_val)))
+            tf.logging.info(epoch)
+            tf.logging.info(acc_batch)
+            tf.logging.info(acc_val)
+
 
         return
 
