@@ -26,6 +26,9 @@ class CIFAR10():
     def __init__(self, data='cifar', lr=0.01, batch_size=64, epochs=5):
 
         self.data = data
+        self.lr = lr
+        self.batch_size = batch_size
+        self.epochs = epochs
 
     def _load_data(self, data):
         """
@@ -38,6 +41,16 @@ class CIFAR10():
         else:
             logging.error('Incorrect dataset name given')
         return x_train, y_train, x_test, y_test
+
+    def _train_val_split(self):
+        """
+        :return: training, validation and test set data
+        """
+        x_train, y_train, x_test, y_test = self._load_data()
+
+        x_train, x_validation = x_train[5000:], x_train[:5000]
+        y_train, y_validation = y_train[5000:], y_train[:5000]
+        return x_train, x_validation, x_test, y_train, y_validation, y_test
 
     def check_sample_data(self):
         """
@@ -57,7 +70,7 @@ class CIFAR10():
         function to investigate data using plots
         :param x: subplot parameter
         :param y: subplot parameter
-        :return: plot figures with labels
+        :return: plot figures with labels from training data
         """
         n_images = x*y
 
@@ -90,6 +103,21 @@ class CIFAR10():
                 plt.show()
         return
 
+    def fully_connected(self):
+        # TODO: complete function definition
+        return
+
+    def cond2d_relu(self):
+        # TODO: complete function definition
+        return
+
+    def build_and_train(self):
+        # TODO: complete function definition
+        return
+
+    def result_plotting(self):
+        # TODO: complete function definition
+        return
 
 cifar = CIFAR10('cifar')
 cifar.data_investigation(3, 5)
