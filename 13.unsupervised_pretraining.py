@@ -10,3 +10,5 @@ We will implement this for MNIST data, just to understand the process and implem
 import tensorflow as tf
 import numpy as np
 import os
+
+# TODO: Need to work on it 
