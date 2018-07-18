@@ -23,15 +23,17 @@ LOGDIR = "logs/"
 
 class CIFAR10():
 
-    def __init__(self, data='cifar', lr=0.01, batch_size=64, epochs=5, init=None):
+    def __init__(self, session: tf.Session(), data='cifar', lr=0.01, batch_size=64, epochs=5, init=None):
         """
 
+        :param session:
         :param data:
         :param lr:
         :param batch_size:
         :param epochs:
         :param init:
         """
+        self.session = session
         self.data = data
         self.lr = lr
         self.batch_size = batch_size
@@ -44,45 +46,49 @@ class CIFAR10():
         :return: dataset and labels for training and test
         """
         data.lower()
-        if data=='cifar':
-            (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+        if data == 'cifar':
+            (self.x_train, self.y_train), (self.x_test, self.y_test) = tf.keras.datasets.cifar10.load_data()
         else:
             logging.error('Incorrect dataset name given')
-        return x_train, y_train, x_test, y_test
+        return
 
-    def _train_val_split(self):
+    def _train_val_split(self, _index=5000):
         """
+
+        :param _index: index for slicing
         :return: training, validation and test set data
         """
-        x_train, y_train, x_test, y_test = self._load_data()
+        self._load_data('cifar')
 
-        x_train, x_validation = x_train[5000:], x_train[:5000]
-        y_train, y_validation = y_train[5000:], y_train[:5000]
+        x_train, x_validation = self.x_train[5000:], self.x_train[:5000]
+        y_train, y_validation = self.y_train[5000:], self.y_train[:5000]
+        x_test, y_test = self.x_test, self.y_test
         return x_train, x_validation, x_test, y_train, y_validation, y_test
 
     def check_sample_data(self):
         """
         :return: print something
         """
-        train, val, test, _, _, _ = self._train_test_split(_index=5000)
+        train, val, test, _, _, _ = self._train_val_split(_index=5000)
         print('Size of train, validation and test set:\n')
         print(train.shape)
         print(val.shape)
         print(test.shape)
-        print('Sample data:\n')
-        print(train[:10])
+        # print('Sample data:\n')
+        # print(train[:10])
         return
 
     def data_investigation(self, x, y, show=False):
         """
         function to investigate data using plots
+        :param show: plot or not
         :param x: subplot parameter
         :param y: subplot parameter
         :return: plot figures with labels from training data
         """
         n_images = x*y
 
-        x_train, y_train, x_test, y_test = self._load_data(self.data)
+        x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_val_split()
 
         sample_image = x_train[:n_images]
         sample_label = y_train[:n_images]
@@ -102,7 +108,7 @@ class CIFAR10():
 
         fig, axs = plt.subplots(x, y)
         for i, ax in enumerate(np.reshape(axs, [-1])):
-            ax.imshow(sample_image[i,:,:,:])
+            ax.imshow(sample_image[i, :, :, :])
             ax.xaxis.set_visible(False)
             ax.yaxis.set_visible(False)
             # ax.set_axis_off()
@@ -140,7 +146,6 @@ class CIFAR10():
             else:
                 return fc + biases
 
-
     def conv_relu(self, input, kernal_shape, bias_shape, name='conv', is_weights=False):
         """
 
@@ -165,7 +170,6 @@ class CIFAR10():
                 return tf.nn.relu(conv + biases)
             else:
                 return tf.nn.relu(conv + biases), weights
-
 
     def max_pooling(self, input, name='maxpool'):
         """
