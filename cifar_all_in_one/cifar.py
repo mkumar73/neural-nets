@@ -24,7 +24,8 @@ LOGDIR = "logs/"
 class CIFAR10():
 
     def __init__(self, session: tf.Session(), data='cifar', lr=0.01,
-                 batch_size=64, epochs=5, early=False, optimizer='adam', init=None):
+                 batch_size=64, epochs=5, early=False, optimizer='adam',
+                 bn=False, init=None):
         """
 
         :param session: tf session
@@ -34,6 +35,7 @@ class CIFAR10():
         :param epochs: #epoch
         :param early: early stopping flag
         :param optimizer: optimizer name
+        :param bn: batch normalization
         :param init: initialization parameter
         """
         self.session = session
@@ -43,6 +45,7 @@ class CIFAR10():
         self.epochs = epochs
         self.early = early
         self.optimizer = optimizer
+        self.bn = bn
         self._init = init
 
     def _load_data(self, data):
@@ -150,11 +153,11 @@ class CIFAR10():
             else:
                 return fc + biases
 
-    def conv_relu(self, input, kernal_shape, bias_shape, name='conv', is_weights=False):
+    def conv_relu(self, input, filter_shape, bias_shape, name='conv', is_weights=False):
         """
 
         :param input: input
-        :param kernal_shape: filter size
+        :param filter_shape: filter shape
         :param bias_shape: bias shape
         :param name: name
         :param is_weights: if weights are required for visualization
@@ -165,7 +168,7 @@ class CIFAR10():
                 init = tf.contrib.layers.xavier_initializer
             else:
                 init = tf.truncated_normal_initializer(stddev=0.01)
-            weights = tf.get_variable(name='weight', shape=kernal_shape, initializer=init)
+            weights = tf.get_variable(name='weight', shape=filter_shape, initializer=init)
             biases = tf.get_variable(name='bias', shape=bias_shape, initializer=init)
 
             conv = tf.nn.conv2d(input, weights, strides=[1, 1, 1, 1], padding='SAME')
@@ -190,7 +193,78 @@ class CIFAR10():
         return
 
     def build_and_train(self):
-        # TODO: complete function definition
+        """
+        :return:
+        """
+        # reset graph
+        # tf.reset_default_graph()
+
+        with tf.name_scope('input'):
+            X = tf.placeholder(tf.float32, shape=[None, 32, 32, 3], name='input')
+            y = tf.placeholder(tf.int64, shape=[None], name='label')
+
+        with tf.name_scope('conv1'):
+            conv1, conv1_w = self.conv_relu(X, [3, 3, 3, 16], [16], name='conv1', is_weights=True)
+            tf.summary.histogram('conv1', conv1)
+
+            pool1 = self.max_pooling(conv1, name='pool1')
+            tf.summary.histogram('pool1', pool1)
+
+        with tf.name_scope('conv2'):
+            conv2, conv2_w = self.conv_relu(conv1, [3, 3, 16, 32], [32], name='conv2', is_weights=True)
+            tf.summary.histogram('conv2', conv2)
+
+            pool2 = self.max_pooling(conv2, name='pool2')
+            tf.summary.histogram('pool2', pool2)
+
+        # with tf.name_scope('conv3'):
+        #     conv3, conv3_w = self.conv_relu(conv2, [3, 3, 32, 64], [64], name='conv3', is_weights=True)
+        #     tf.summary.histogram('conv3', conv3)
+        #
+        #     pool3 = self.max_pooling(conv3, name='pool3')
+        #     tf.summary.histogram('pool3', pool3)
+
+        with tf.name_scope('flatten'):
+            fc_input = tf.reshape(pool2, [-1, 8 * 8 * 32])
+
+        with tf.name_scope('fc'):
+            fc = self.fully_connected(fc_input, [8 * 8 * 32, 64], act_fn='relu', name='fc1', output=False)
+            tf.summary.histogram('fc', fc)
+
+        with tf.name_scope('output'):
+            logit = self.fully_connected(fc, [64, 10], act_fn='relu', name='output', output=True)
+            tf.summary.histogram('output', logit)
+
+        # print all trainable variables
+        for i in tf.trainable_variables():
+            print(i)
+
+        with tf.name_scope('prediction'):
+            # normalize the probabolity value so sum upto 1 for each row.
+            y_pred = tf.nn.softmax(logit)
+            # get the predicted class for each sample using argmax
+            y_pred_cls = tf.argmax(y_pred, axis=1)
+
+        with tf.name_scope('cost'):
+            entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logit, labels=y)
+            cost = tf.reduce_mean(entropy)
+            tf.summary.scalar('cost', cost)
+
+        with tf.name_scope('optimizer'):
+            self.optimizer.lower()
+            if self.optimizer == 'adam':
+                optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(cost)
+            elif self.optimizer == 'rmsprop':
+                optimizer = tf.train.RMSPropOptimizer(learning_rate=self.lr).minimize(cost)
+            else:
+                optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.lr).minimize(cost)
+
+        with tf.name_scope('accuracy'):
+            # prformance measures
+            correct_prediction = tf.equal(y_pred_cls, y)
+            accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+            tf.summary.scalar('accuracy', accuracy)
+
         return
 
     def result_plotting(self):
@@ -199,10 +273,12 @@ class CIFAR10():
 
 
 def main():
-    cifar = CIFAR10('cifar')
-    cifar.data_investigation(3, 5)
-    cifar.check_sample_data()
-
+    with tf.Session() as session:
+        tf.reset_default_graph()
+        cifar = CIFAR10(session, 'cifar')
+        # cifar.data_investigation(3, 5)
+        # cifar.check_sample_data()
+        cifar.build_and_train()
 
 if __name__ == '__main__':
     main()
