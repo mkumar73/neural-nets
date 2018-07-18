@@ -1,6 +1,7 @@
-# class based approach to for MNIST classification
-# using tf.layers.dense instead of contrib
-
+"""
+class based approach to for MNIST classification
+using tf.layers.dense instead of contrib
+"""
 
 import tensorflow as tf
 import numpy as np
