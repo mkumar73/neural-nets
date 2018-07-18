@@ -24,7 +24,14 @@ LOGDIR = "logs/"
 class CIFAR10():
 
     def __init__(self, data='cifar', lr=0.01, batch_size=64, epochs=5, init=None):
+        """
 
+        :param data:
+        :param lr:
+        :param batch_size:
+        :param epochs:
+        :param init:
+        """
         self.data = data
         self.lr = lr
         self.batch_size = batch_size
@@ -134,7 +141,7 @@ class CIFAR10():
                 return fc + biases
 
 
-    def cond2d_relu(self, input, kernal_shape, bias_shape, name='conv', is_weights=False):
+    def conv_relu(self, input, kernal_shape, bias_shape, name='conv', is_weights=False):
         """
 
         :param input:
@@ -160,9 +167,15 @@ class CIFAR10():
                 return tf.nn.relu(conv + biases), weights
 
 
-    def max_pooling(self):
-        # TODO: complete function definition
-        return
+    def max_pooling(self, input, name='maxpool'):
+        """
+
+        :param input:
+        :param name:
+        :return:
+        """
+        with tf.name_scope(name):
+            return tf.nn.max_pool(input, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
     def batch_norm(self):
         # TODO: complete function definition
@@ -176,8 +189,14 @@ class CIFAR10():
         # TODO: complete function definition
         return
 
-cifar = CIFAR10('cifar')
-cifar.data_investigation(3, 5, show=True)
+
+def main():
+    cifar = CIFAR10('cifar')
+    cifar.data_investigation(3, 5, show=True)
+
+
+# if __name__ == '__main__':
+#     main()
 
 
 
