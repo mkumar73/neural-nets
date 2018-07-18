@@ -23,12 +23,13 @@ LOGDIR = "logs/"
 
 class CIFAR10():
 
-    def __init__(self, data='cifar', lr=0.01, batch_size=64, epochs=5):
+    def __init__(self, data='cifar', lr=0.01, batch_size=64, epochs=5, init=None):
 
         self.data = data
         self.lr = lr
         self.batch_size = batch_size
         self.epochs = epochs
+        self._init = init
 
     def _load_data(self, data):
         """
@@ -103,15 +104,63 @@ class CIFAR10():
                 plt.show()
         return
 
-    def fully_connected(self):
-        # TODO: complete function definition
-        return
+    def fully_connected(self, input, kernel_shape, act_fn='relu', name='fc', output=False):
+        """
+
+        :param input:
+        :param kernal_shape:
+        :param act_fn:
+        :param name:
+        :param init:
+        :param output:
+        :return:
+        """
+        with tf.name_scope(name):
+            if self._init == 'xavier':
+                init = tf.contrib.layers.xavier_initializer
+            else:
+                init = tf.truncated_normal_initializer(stddev=0.01)
+            weights = tf.get_variable(name='weight', shape=kernel_shape, initializer=init)
+            biases = tf.get_variable(name='bias', shape=kernel_shape[-1], initializer=init)
+
+            fc = tf.matmul(input, weights)
+
+            if not output:
+                if act_fn == 'relu':
+                    return tf.nn.relu(fc + biases)
+                else:
+                    return tf.nn.tanh(fc + biases)
+            else:
+                return fc + biases
+
+
+    def cond2d_relu(self, input, kernal_shape, bias_shape, name='conv', is_weights=False):
+        """
+
+        :param input:
+        :param kernal_shape:
+        :param bias_shape:
+        :param name:
+        :param is_weights:
+        :return:
+        """
+        with tf.name_scope(name):
+            if self._init == 'xavier':
+                init = tf.contrib.layers.xavier_initializer
+            else:
+                init = tf.truncated_normal_initializer(stddev=0.01)
+            weights = tf.get_variable(name='weight', shape=kernal_shape, initializer=init)
+            biases = tf.get_variable(name='bias', shape=bias_shape, initializer=init)
+
+            conv = tf.nn.conv2d(input, weights, strides=[1, 1, 1, 1], padding='SAME')
+
+            if not is_weights:
+                return tf.nn.relu(conv + biases)
+            else:
+                return tf.nn.relu(conv + biases), weights
+
 
     def max_pooling(self):
-        # TODO: complete function definition
-        return
-
-    def cond2d_relu(self):
         # TODO: complete function definition
         return
 
