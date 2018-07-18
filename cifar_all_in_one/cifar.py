@@ -23,21 +23,26 @@ LOGDIR = "logs/"
 
 class CIFAR10():
 
-    def __init__(self, session: tf.Session(), data='cifar', lr=0.01, batch_size=64, epochs=5, init=None):
+    def __init__(self, session: tf.Session(), data='cifar', lr=0.01,
+                 batch_size=64, epochs=5, early=False, optimizer='adam', init=None):
         """
 
-        :param session:
-        :param data:
-        :param lr:
-        :param batch_size:
-        :param epochs:
-        :param init:
+        :param session: tf session
+        :param data: name of dataset
+        :param lr: learning rate
+        :param batch_size: #sample per batch
+        :param epochs: #epoch
+        :param early: early stopping flag
+        :param optimizer: optimizer name
+        :param init: initialization parameter
         """
         self.session = session
         self.data = data
         self.lr = lr
         self.batch_size = batch_size
         self.epochs = epochs
+        self.early = early
+        self.optimizer = optimizer
         self._init = init
 
     def _load_data(self, data):
@@ -67,13 +72,13 @@ class CIFAR10():
 
     def check_sample_data(self):
         """
-        :return: print something
+        :return: print datasets size
         """
         train, val, test, _, _, _ = self._train_val_split(_index=5000)
         print('Size of train, validation and test set:\n')
-        print(train.shape)
-        print(val.shape)
-        print(test.shape)
+        print('Training data size:', train.shape)
+        print('Validation data size:', val.shape)
+        print('Test data size:', test.shape)
         # print('Sample data:\n')
         # print(train[:10])
         return
@@ -120,13 +125,12 @@ class CIFAR10():
     def fully_connected(self, input, kernel_shape, act_fn='relu', name='fc', output=False):
         """
 
-        :param input:
-        :param kernal_shape:
-        :param act_fn:
-        :param name:
-        :param init:
-        :param output:
-        :return:
+        :param input: input
+        :param kernal_shape: matrix shape
+        :param act_fn: activation function
+        :param name: name of layer
+        :param output: logit or output
+        :return: activated output or logit
         """
         with tf.name_scope(name):
             if self._init == 'xavier':
@@ -149,12 +153,12 @@ class CIFAR10():
     def conv_relu(self, input, kernal_shape, bias_shape, name='conv', is_weights=False):
         """
 
-        :param input:
-        :param kernal_shape:
-        :param bias_shape:
-        :param name:
-        :param is_weights:
-        :return:
+        :param input: input
+        :param kernal_shape: filter size
+        :param bias_shape: bias shape
+        :param name: name
+        :param is_weights: if weights are required for visualization
+        :return: convolved result
         """
         with tf.name_scope(name):
             if self._init == 'xavier':
@@ -174,9 +178,9 @@ class CIFAR10():
     def max_pooling(self, input, name='maxpool'):
         """
 
-        :param input:
-        :param name:
-        :return:
+        :param input: input
+        :param name: name
+        :return: pooled result
         """
         with tf.name_scope(name):
             return tf.nn.max_pool(input, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
@@ -196,11 +200,12 @@ class CIFAR10():
 
 def main():
     cifar = CIFAR10('cifar')
-    cifar.data_investigation(3, 5, show=True)
+    cifar.data_investigation(3, 5)
+    cifar.check_sample_data()
 
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
 
 
 
