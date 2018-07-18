@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 
 
-class MNIST_DENSE():
+class MNISTDENSE():
 
     def __init__(self, session:tf.Session(), data='mnist', input_size=28, lr=0.01,
                  batch_size=64, epochs=10):
@@ -29,7 +29,6 @@ class MNIST_DENSE():
 
     def _load_data(self):
         """
-
         :return: load the data from dataset library
         """
         self.data.lower()
@@ -37,7 +36,6 @@ class MNIST_DENSE():
             (self.x_train, self.y_train), (self.x_test, self.y_test) = tf.keras.datasets.mnist.load_data()
         else:
             print('Dataset error: Only implmented for MNIST as of now.!!')
-
         return
 
     def _data_preprocessing(self):
@@ -52,9 +50,7 @@ class MNIST_DENSE():
 
         y_train = self.y_train.astype(np.int64)
         y_test = self.y_test.astype(np.int64)
-
         return x_train, x_test, y_train, y_test
-
 
     def _train_test_split(self, _index = 5000):
         """
@@ -66,9 +62,7 @@ class MNIST_DENSE():
 
         x_train, x_validation = x_train[5000:], x_train[:5000]
         y_train, y_validation = y_train[5000:], y_train[:5000]
-
         return x_train, x_validation, x_test, y_train, y_validation, y_test
-
 
     def shuffle_batch(self, x, y, batch_size):
         """
@@ -83,10 +77,8 @@ class MNIST_DENSE():
             x_batch, y_batch = x[batch_idx], y[batch_idx]
             yield x_batch, y_batch
 
-
     def check_sample_data(self):
         """
-
         :return: print something
         """
         train, val, test, _, _, _ = self._train_test_split(_index=5000)
@@ -96,9 +88,7 @@ class MNIST_DENSE():
         print(test.shape)
         print('Sample data:\n')
         print(train[:10])
-
         return
-
 
     def build_network(self, session, n_h1, n_h2, n_output):
         """
@@ -124,13 +114,19 @@ class MNIST_DENSE():
             entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
             loss = tf.reduce_mean(entropy, name='loss')
 
+        # implement gradient clipping, it might not improve the performance
+        # but its important to know the implementation technique
         with tf.name_scope('optimize'):
-            optmizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
+            threshold = 1.0
+            optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
+            grad_var = optimizer.compute_gradients(loss)
+            clipped_grads = [(tf.clip_by_value(grad, -threshold, threshold), var)
+                             for grad, var in grad_var]
+            training_op = optimizer.apply_gradients(clipped_grads)
 
         with tf.name_scope('accuracy'):
             correct = tf.equal(tf.argmax(logits, 1), y)
             accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-
 
         x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_test_split()
 
@@ -139,7 +135,7 @@ class MNIST_DENSE():
 
         for epoch in range(self.epochs):
             for x_batch, y_batch in self.shuffle_batch(x_train, y_train, self.batch_size):
-                session.run(optmizer, feed_dict={X: x_batch, y: y_batch})
+                session.run(training_op, feed_dict={X: x_batch, y: y_batch})
             acc_batch = session.run(accuracy, feed_dict={X: x_batch, y: y_batch})
             acc_val = session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
 
@@ -151,9 +147,10 @@ class MNIST_DENSE():
 def main():
 
     with tf.Session() as session:
-        mnist = MNIST_DENSE(session, 'mnist', 28, 0.01, 64, 10)
+        mnist = MNISTDENSE(session, 'mnist', 28, 0.01, 64, 10)
         mnist.build_network(session, n_h1=25, n_h2=25, n_output=10)
 
 
 if __name__ == '__main__':
     main()
+
