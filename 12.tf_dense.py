@@ -117,7 +117,7 @@ class MNISTDENSE():
         # implement gradient clipping, it might not improve the performance
         # but its important to know the implementation technique
         with tf.name_scope('optimize'):
-            threshold = 1.0
+            threshold = 0.75
             optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
             grad_var = optimizer.compute_gradients(loss)
             clipped_grads = [(tf.clip_by_value(grad, -threshold, threshold), var)
