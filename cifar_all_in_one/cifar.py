@@ -94,10 +94,10 @@ class CIFAR10():
 
         fig, axs = plt.subplots(x, y)
         for i, ax in enumerate(np.reshape(axs, [-1])):
-            ax.imshow(sample_image[i])
+            ax.imshow(sample_image[i,:,:,:])
             ax.xaxis.set_visible(False)
             ax.yaxis.set_visible(False)
-            ax.set_axis_off()
+            # ax.set_axis_off()
             ax.set_title(str(int(sample_label[i])) + ':' + label_to_word[int(sample_label[i])])
             if show:
                 plt.show()
@@ -107,7 +107,15 @@ class CIFAR10():
         # TODO: complete function definition
         return
 
+    def max_pooling(self):
+        # TODO: complete function definition
+        return
+
     def cond2d_relu(self):
+        # TODO: complete function definition
+        return
+
+    def batch_norm(self):
         # TODO: complete function definition
         return
 
@@ -120,7 +128,7 @@ class CIFAR10():
         return
 
 cifar = CIFAR10('cifar')
-cifar.data_investigation(3, 5)
+cifar.data_investigation(3, 5, show=True)
 
 
 
