@@ -116,10 +116,11 @@ class CIFAR10():
 
         fig, axs = plt.subplots(x, y)
         for i, ax in enumerate(np.reshape(axs, [-1])):
-            ax.imshow(sample_image[i, :, :, :])
-            ax.xaxis.set_visible(False)
-            ax.yaxis.set_visible(False)
-            # ax.set_axis_off()
+            # ax.imshow(sample_image[i, :, :, :])
+            ax.imshow(sample_image[i])
+            # ax.xaxis.set_visible(False)
+            # ax.yaxis.set_visible(False)
+            ax.axis('off')
             ax.set_title(str(int(sample_label[i])) + ':' + label_to_word[int(sample_label[i])])
             if show:
                 plt.show()
@@ -276,9 +277,9 @@ def main():
 
     with tf.Session() as session:
         cifar = CIFAR10(session, 'cifar')
-        # cifar.data_investigation(3, 5)
-        # cifar.check_sample_data()
-        cifar.build_and_train()
+        cifar.data_investigation(3, 5, show=True)
+        cifar.check_sample_data()
+        # cifar.build_and_train()
 
 
 if __name__ == '__main__':
