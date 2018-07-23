@@ -277,7 +277,7 @@ def main():
 
     with tf.Session() as session:
         cifar = CIFAR10(session, 'cifar')
-        cifar.data_investigation(3, 5, show=True)
+        # cifar.data_investigation(3, 5, show=True)
         cifar.check_sample_data()
         # cifar.build_and_train()
 
