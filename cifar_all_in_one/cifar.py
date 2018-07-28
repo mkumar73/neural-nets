@@ -258,18 +258,12 @@ class CIFAR10():
             tf.summary.histogram('fc', fc)
 
         with tf.name_scope('logit'):
-            logit = self.fully_connected(fc, [64, 10], act_fn='relu', name='output', output=True)
+            logit = self.fully_connected(fc, [64, 10], name='output', output=True)
             tf.summary.histogram('output', logit)
 
         # print all trainable variables
         for i in tf.trainable_variables():
             print(i)
-
-        with tf.name_scope('prediction'):
-            # normalize the probabolity value so sum upto 1 for each row.
-            y_pred = tf.nn.softmax(logit)
-            # get the predicted class for each sample using argmax
-            y_pred_cls = tf.argmax(y_pred, axis=1)
 
         with tf.name_scope('cost'):
             entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logit, labels=y)
@@ -286,9 +280,12 @@ class CIFAR10():
                 optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.lr).minimize(cost)
 
         with tf.name_scope('accuracy'):
+            # normalize the probability value so sum to 1 for each row.
+            # get the predicted class for each sample using argmax
+            y_pred = tf.argmax(tf.nn.softmax(logit), axis=1)
             # performance measures
-            correct_prediction = tf.equal(y_pred_cls, y)
-            accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+            prediction = tf.equal(y_pred, y)
+            accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
             tf.summary.scalar('accuracy', accuracy)
 
         x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_val_split()
