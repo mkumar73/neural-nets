@@ -67,12 +67,12 @@ class CIFAR10():
         """
         self._load_data('cifar')
 
-        self.x_train = self.x_train.astype(np.float32) # .reshape(-1, self.image_size)/255.0
-        self.x_test = self.x_test.astype(np.float32) # .reshape(-1, self.image_size)/255.0
+        self.x_train = self.x_train.astype(np.float32) # /255.0
+        self.x_test = self.x_test.astype(np.float32) # /255.0
 
-        self.y_train = self.y_train.astype(np.int64).reshape(-1, )
-        self.y_test = self.y_test.astype(np.int64).reshape(-1, )
-        return # x_train, x_test, y_train, y_test
+        self.y_train = self.y_train.astype(np.int64)
+        self.y_test = self.y_test.astype(np.int64)
+        return
 
     def _train_val_split(self, _index=5000):
         """
@@ -97,6 +97,7 @@ class CIFAR10():
         print('Validation data size:', val.shape)
         print('Test data size:', test.shape)
         print('Test label shape:', y_test.shape)
+        print(y_test[:1])
         # print('Sample data:\n')
         # print(train[:10])
         return
@@ -174,13 +175,13 @@ class CIFAR10():
 
             fc = tf.matmul(input, weights)
 
-            if not output:
+            if output:
+                return fc + biases
+            else:
                 if act_fn == 'relu':
                     return tf.nn.relu(fc + biases)
                 else:
                     return tf.nn.tanh(fc + biases)
-            else:
-                return fc + biases
 
     def conv_relu(self, input, filter_shape, bias_shape, name='conv', is_weights=False):
         """
@@ -254,7 +255,7 @@ class CIFAR10():
             fc_input = tf.reshape(pool2, [-1, 8 * 8 * 32])
 
         with tf.name_scope('fc'):
-            fc = self.fully_connected(fc_input, [8 * 8 * 32, 64], act_fn='relu', name='fc1', output=False)
+            fc = self.fully_connected(fc_input, [8 * 8 * 32, 64], act_fn='relu', name='fc1')
             tf.summary.histogram('fc', fc)
 
         with tf.name_scope('logit'):
@@ -270,6 +271,15 @@ class CIFAR10():
             cost = tf.reduce_mean(entropy)
             tf.summary.scalar('cost', cost)
 
+        with tf.name_scope('accuracy'):
+            # normalize the probability value so sum to 1 for each row.
+            # get the predicted class for each sample using argmax, index presents class
+            y_pred = tf.argmax(tf.nn.softmax(logit), axis=1)
+            # performance measures
+            prediction = tf.equal(y_pred, y)
+            accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
+            tf.summary.scalar('accuracy', accuracy)
+
         with tf.name_scope('optimizer'):
             self.optimizer.lower()
             if self.optimizer == 'adam':
@@ -279,15 +289,7 @@ class CIFAR10():
             else:
                 optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.lr).minimize(cost)
 
-        with tf.name_scope('accuracy'):
-            # normalize the probability value so sum to 1 for each row.
-            # get the predicted class for each sample using argmax
-            y_pred = tf.argmax(tf.nn.softmax(logit), axis=1)
-            # performance measures
-            prediction = tf.equal(y_pred, y)
-            accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
-            tf.summary.scalar('accuracy', accuracy)
-
+        # training process started
         x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_val_split()
 
         init = tf.global_variables_initializer()
