@@ -60,13 +60,27 @@ class CIFAR10():
             logging.error('Incorrect dataset name given')
         return
 
+    def _data_preprocessing(self):
+        """
+        private function
+        :return: processed data
+        """
+        self._load_data('cifar')
+
+        self.x_train = self.x_train.astype(np.float32) # .reshape(-1, self.image_size)/255.0
+        self.x_test = self.x_test.astype(np.float32) # .reshape(-1, self.image_size)/255.0
+
+        self.y_train = self.y_train.astype(np.int64).reshape(-1, )
+        self.y_test = self.y_test.astype(np.int64).reshape(-1, )
+        return # x_train, x_test, y_train, y_test
+
     def _train_val_split(self, _index=5000):
         """
 
         :param _index: index for slicing
         :return: training, validation and test set data
         """
-        self._load_data('cifar')
+        self._data_preprocessing()
 
         x_train, x_validation = self.x_train[5000:], self.x_train[:5000]
         y_train, y_validation = self.y_train[5000:], self.y_train[:5000]
@@ -77,11 +91,12 @@ class CIFAR10():
         """
         :return: print datasets size
         """
-        train, val, test, _, _, _ = self._train_val_split(_index=5000)
+        train, val, test, y_train, y_val, y_test = self._train_val_split(_index=5000)
         print('Size of train, validation and test set:\n')
         print('Training data size:', train.shape)
         print('Validation data size:', val.shape)
         print('Test data size:', test.shape)
+        print('Test label shape:', y_test.shape)
         # print('Sample data:\n')
         # print(train[:10])
         return
@@ -317,7 +332,7 @@ def main():
     with tf.Session() as session:
         cifar = CIFAR10(session, 'cifar')
         # cifar.data_investigation(3, 5, show=True)
-        # cifar.check_sample_data()
+        cifar.check_sample_data()
         cifar.build_and_train()
 
 
