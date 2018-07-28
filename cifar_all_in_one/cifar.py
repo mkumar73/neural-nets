@@ -86,6 +86,19 @@ class CIFAR10():
         # print(train[:10])
         return
 
+    def shuffle_batch(self, x, y, batch_size):
+        """
+        :param x: image
+        :param y: labels
+        :param batch_size: #samples in a batch
+        :return: shuffeld samples, images and labels
+        """
+        rnd_idx = np.random.permutation(len(x))
+        n_batches = len(x) // batch_size
+        for batch_idx in np.array_split(rnd_idx, n_batches):
+            x_batch, y_batch = x[batch_idx], y[batch_idx]
+            yield x_batch, y_batch
+
     def data_investigation(self, x, y, show=False):
         """
         function to investigate data using plots
@@ -258,10 +271,36 @@ class CIFAR10():
                 optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.lr).minimize(cost)
 
         with tf.name_scope('accuracy'):
-            # prformance measures
+            # performance measures
             correct_prediction = tf.equal(y_pred_cls, y)
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             tf.summary.scalar('accuracy', accuracy)
+
+        x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_val_split()
+
+        init = tf.global_variables_initializer()
+        self.session.run(init)
+
+        # merge all summaries
+        summ = tf.summary.merge_all()
+
+        # write the summaries
+        writer = tf.summary.FileWriter(LOGDIR, self.session.graph)
+
+        # save the model for future use
+        saver = tf.train.Saver()
+
+        for epoch in range(self.epochs):
+            for x_batch, y_batch in self.shuffle_batch(x_train, y_train, self.batch_size):
+                _, s = self.session.run([optimizer, summ], feed_dict={X: x_batch, y: y_batch})
+
+            batch_accuracy = self.session.run(accuracy, feed_dict={{X: x_batch, y: y_batch}})
+            validation_accuracy = self.session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
+
+            print('Epoch:', epoch, 'Batch accuracy:', batch_accuracy, 'Validation accuracy:', validation_accuracy)
+
+            saver.save(self.session, os.path.join(LOGDIR, "model.ckpt"), epoch)
+            writer.add_summary(s, epoch)
 
         return
 
@@ -278,8 +317,8 @@ def main():
     with tf.Session() as session:
         cifar = CIFAR10(session, 'cifar')
         # cifar.data_investigation(3, 5, show=True)
-        cifar.check_sample_data()
-        # cifar.build_and_train()
+        # cifar.check_sample_data()
+        cifar.build_and_train()
 
 
 if __name__ == '__main__':
