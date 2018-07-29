@@ -182,11 +182,18 @@ class CIFAR10():
             tf.summary.histogram('pool1', pool1)
 
         with tf.name_scope('conv2'):
-            conv2 = tf.layers.conv2d(X, filters=32, kernel_size=(3,3), strides=(1,1), padding='same', kernel_initializer=init)
+            conv2 = tf.layers.conv2d(pool1, filters=32, kernel_size=(3,3), strides=(1,1), padding='same', kernel_initializer=init)
             tf.summary.histogram('conv2', conv2)
 
             pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=(2,2), strides=(2,2), name='pool2')
             tf.summary.histogram('pool2', pool2)
+
+        # with tf.name_scope('conv3'):
+        #     conv3 = tf.layers.conv2d(X, filters=32, kernel_size=(3,3), strides=(1,1), padding='same', kernel_initializer=init)
+        #     tf.summary.histogram('conv3', conv3)
+        #
+        #     pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=(2,2), strides=(2,2), name='pool2')
+        #     tf.summary.histogram('pool2', pool2)
 
         with tf.name_scope('flatten'):
             fc_input = tf.layers.flatten(pool2)
