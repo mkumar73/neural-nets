@@ -83,8 +83,8 @@ class CIFAR10():
         self._data_preprocessing()
 
         x_train, x_validation = self.x_train[_index:], self.x_train[:_index]
-        y_train, y_validation = self.y_train[_index:], self.y_train[:_index]
-        x_test, y_test = self.x_test, self.y_test
+        y_train, y_validation = self.y_train[_index:].reshape(-1,), self.y_train[:_index].reshape(-1,)
+        x_test, y_test = self.x_test, self.y_test.reshape(-1,)
         return x_train, x_validation, x_test, y_train, y_validation, y_test
 
     def check_sample_data(self):
@@ -243,13 +243,13 @@ class CIFAR10():
 
         for epoch in range(self.epochs):
             for x_batch, y_batch in self.shuffle_batch(x_train, y_train, self.batch_size):
-                y_batch = y_batch.reshape(-1,)
+                # y_batch = y_batch.reshape(-1,)
                 _, s = self.session.run([optimizer, summ], feed_dict={X: x_batch, y: y_batch})
 
             batch_accuracy = self.session.run(accuracy, feed_dict={X: x_batch, y: y_batch})
             validation_accuracy = self.session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
 
-            print('Epoch:', epoch, 'Batch accuracy:', batch_accuracy, 'Validation accuracy:', validation_accuracy)
+            print('Epoch:', epoch+1, 'Batch accuracy:', batch_accuracy, 'Validation accuracy:', validation_accuracy)
             # print('Epoch:', epoch, 'Batch accuracy:', batch_accuracy)
 
             saver.save(self.session, os.path.join(LOGDIR, "model.ckpt"), epoch)
@@ -268,9 +268,9 @@ def main():
     tf.reset_default_graph()
 
     with tf.Session() as session:
-        cifar = CIFAR10(session, 'cifar')
+        cifar = CIFAR10(session, 'cifar', batch_size=256, epochs=5, optimizer='adam', init='xavier')
         # cifar.data_investigation(3, 5, show=True)
-        cifar.check_sample_data()
+        # cifar.check_sample_data()
         cifar.build_and_train()
 
 
