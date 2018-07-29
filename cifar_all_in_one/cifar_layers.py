@@ -23,9 +23,9 @@ LOGDIR = "logs/"
 
 class CIFAR10():
 
-    def __init__(self, session: tf.Session(), data='cifar', lr=0.01,
+    def __init__(self, session: tf.Session(), data='cifar', lr=0.001,
                  batch_size=64, epochs=5, early=False, optimizer='adam',
-                 bn=False, init='normal'):
+                 bn=False, init_std='xavier'):
         """
 
         :param session: tf session
@@ -46,7 +46,7 @@ class CIFAR10():
         self.early = early
         self.optimizer = optimizer
         self.bn = bn
-        self._init = init
+        self._init = init_std
 
     def _load_data(self, data):
         """
@@ -172,7 +172,7 @@ class CIFAR10():
             y = tf.placeholder(tf.int64, shape=[None], name='label')
 
         if self._init == 'xavier':
-            init = tf.contrib.layers.xavier_initializer
+            init = tf.contrib.layers.xavier_initializer()
         elif self._init == 'normal':
             init = tf.truncated_normal_initializer(stddev=0.01)
 
@@ -273,8 +273,11 @@ class CIFAR10():
             print('Epoch:', epoch+1, 'Batch accuracy:', batch_accuracy, 'Validation accuracy:', validation_accuracy)
             # print('Epoch:', epoch, 'Batch accuracy:', batch_accuracy)
 
-            saver.save(self.session, os.path.join(LOGDIR, "model.ckpt"), epoch)
+            # write the summary for every epoch
             writer.add_summary(s, epoch)
+            # write model ckpts for last epoch
+            if epoch == self.epochs-1:
+                saver.save(self.session, os.path.join(LOGDIR, "model.ckpt"), epoch)
 
         return
 
@@ -289,7 +292,7 @@ def main():
     tf.reset_default_graph()
 
     with tf.Session() as session:
-        cifar = CIFAR10(session, 'cifar', batch_size=256, epochs=5, optimizer='adam', init='normal')
+        cifar = CIFAR10(session, 'cifar', batch_size=128, epochs=5, optimizer='adam', init_std='xavier')
         # cifar.data_investigation(3, 5, show=True)
         # cifar.check_sample_data()
         cifar.build_and_train()
