@@ -25,7 +25,7 @@ class CIFAR10():
 
     def __init__(self, session: tf.Session(), data='cifar', lr=0.01,
                  batch_size=64, epochs=5, early=False, optimizer='adam',
-                 bn=False, init=None):
+                 bn=False, init='normal'):
         """
 
         :param session: tf session
@@ -171,7 +171,7 @@ class CIFAR10():
 
         if self._init == 'xavier':
             init = tf.contrib.layers.xavier_initializer
-        else:
+        elif self._init == 'normal':
             init = tf.truncated_normal_initializer(stddev=0.01)
 
         with tf.name_scope('conv1'):
@@ -268,7 +268,7 @@ def main():
     tf.reset_default_graph()
 
     with tf.Session() as session:
-        cifar = CIFAR10(session, 'cifar', batch_size=256, epochs=5, optimizer='adam', init='xavier')
+        cifar = CIFAR10(session, 'cifar', batch_size=256, epochs=5, optimizer='adam', init='normal')
         # cifar.data_investigation(3, 5, show=True)
         # cifar.check_sample_data()
         cifar.build_and_train()
