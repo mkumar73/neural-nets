@@ -155,68 +155,6 @@ class CIFAR10():
                 plt.show()
         return
 
-    def fully_connected(self, input, kernel_shape, act_fn='relu', name='fc', output=False):
-        """
-
-        :param input: input
-        :param kernel_shape: matrix shape
-        :param act_fn: activation function
-        :param name: name of layer
-        :param output: logit or output
-        :return: activated output or logit
-        """
-        with tf.variable_scope(name):
-            if self._init == 'xavier':
-                init = tf.contrib.layers.xavier_initializer
-            else:
-                init = tf.truncated_normal_initializer(stddev=0.01)
-            weights = tf.get_variable(name='weight', shape=kernel_shape, initializer=init)
-            biases = tf.get_variable(name='bias', shape=kernel_shape[-1], initializer=init)
-
-            fc = tf.matmul(input, weights)
-
-            if output:
-                return fc + biases
-            else:
-                if act_fn == 'relu':
-                    return tf.nn.relu(fc + biases)
-                else:
-                    return tf.nn.tanh(fc + biases)
-
-    def conv_relu(self, input, filter_shape, bias_shape, name='conv', is_weights=False):
-        """
-
-        :param input: input
-        :param filter_shape: filter shape
-        :param bias_shape: bias shape
-        :param name: name
-        :param is_weights: if weights are required for visualization
-        :return: convolved result
-        """
-        with tf.variable_scope(name):
-            if self._init == 'xavier':
-                init = tf.contrib.layers.xavier_initializer
-            else:
-                init = tf.truncated_normal_initializer(stddev=0.01)
-            weights = tf.get_variable(name='weight', shape=filter_shape, initializer=init)
-            biases = tf.get_variable(name='bias', shape=bias_shape, initializer=init)
-
-            conv = tf.nn.conv2d(input, weights, strides=[1, 1, 1, 1], padding='SAME')
-
-            if is_weights:
-                return tf.nn.relu(conv + biases), weights
-            else:
-                return tf.nn.relu(conv + biases)
-
-    def max_pooling(self, input, name='maxpool'):
-        """
-
-        :param input: input
-        :param name: name
-        :return: pooled result
-        """
-        with tf.name_scope(name):
-            return tf.nn.max_pool(input, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
     def batch_norm(self):
         # TODO: complete function definition
@@ -231,35 +169,34 @@ class CIFAR10():
             X = tf.placeholder(tf.float32, shape=[None, 32, 32, 3], name='input')
             y = tf.placeholder(tf.int64, shape=[None], name='label')
 
+        if self._init == 'xavier':
+            init = tf.contrib.layers.xavier_initializer
+        else:
+            init = tf.truncated_normal_initializer(stddev=0.01)
+
         with tf.name_scope('conv1'):
-            conv1, conv1_w = self.conv_relu(X, [3, 3, 3, 16], [16], name='conv1', is_weights=True)
+            conv1 = tf.layers.conv2d(X, filters=16, kernel_size=(3,3), strides=(1,1), padding='same', kernel_initializer=init)
             tf.summary.histogram('conv1', conv1)
 
-            pool1 = self.max_pooling(conv1, name='pool1')
+            pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=(2,2), strides=(2,2), name='pool1')
             tf.summary.histogram('pool1', pool1)
 
-        with tf.name_scope('conv1'):
-            conv2, conv2_w = self.conv_relu(conv1, [3, 3, 16, 32], [32], name='conv2', is_weights=True)
+        with tf.name_scope('conv2'):
+            conv2 = tf.layers.conv2d(X, filters=32, kernel_size=(3,3), strides=(1,1), padding='same', kernel_initializer=init)
             tf.summary.histogram('conv2', conv2)
 
-            pool2 = self.max_pooling(conv2, name='pool2')
+            pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=(2,2), strides=(2,2), name='pool2')
             tf.summary.histogram('pool2', pool2)
 
-        # with tf.name_scope('conv3'):
-        #     conv3, conv3_w = self.conv_relu(conv2, [3, 3, 32, 64], [64], name='conv3', is_weights=True)
-        #     tf.summary.histogram('conv3', conv3)
-        #
-        #     pool3 = self.max_pooling(conv3, name='pool3')
-        #     tf.summary.histogram('pool3', pool3)
         with tf.name_scope('flatten'):
-            fc_input = tf.reshape(pool2, [-1, 8 * 8 * 32])
+            fc_input = tf.layers.flatten(pool2)
 
         with tf.name_scope('fc'):
-            fc = self.fully_connected(fc_input, [8 * 8 * 32, 64], act_fn='relu', name='fc1')
+            fc = tf.layers.dense(inputs=fc_input, units=64, activation=tf.nn.relu, kernel_initializer=init, name='fc1')
             tf.summary.histogram('fc', fc)
 
         with tf.name_scope('logit'):
-            logit = self.fully_connected(fc, [64, 10], name='output', output=True)
+            logit = tf.layers.dense(inputs=fc, units=10, activation=None, name='output')
             tf.summary.histogram('output', logit)
 
         # print all trainable variables
@@ -308,12 +245,12 @@ class CIFAR10():
             for x_batch, y_batch in self.shuffle_batch(x_train, y_train, self.batch_size):
                 y_batch = y_batch.reshape(-1,)
                 _, s = self.session.run([optimizer, summ], feed_dict={X: x_batch, y: y_batch})
-                batch_accuracy = self.session.run(accuracy, feed_dict={{X: x_batch, y: y_batch}})
 
-            # validation_accuracy = self.session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
+            batch_accuracy = self.session.run(accuracy, feed_dict={X: x_batch, y: y_batch})
+            validation_accuracy = self.session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
 
-            # print('Epoch:', epoch, 'Batch accuracy:', batch_accuracy, 'Validation accuracy:', validation_accuracy)
-            print('Epoch:', epoch, 'Batch accuracy:', batch_accuracy)
+            print('Epoch:', epoch, 'Batch accuracy:', batch_accuracy, 'Validation accuracy:', validation_accuracy)
+            # print('Epoch:', epoch, 'Batch accuracy:', batch_accuracy)
 
             saver.save(self.session, os.path.join(LOGDIR, "model.ckpt"), epoch)
             writer.add_summary(s, epoch)

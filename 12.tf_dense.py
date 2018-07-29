@@ -83,13 +83,14 @@ class MNISTDENSE():
         """
         :return: print something
         """
-        train, val, test, _, _, _ = self._train_test_split(_index=5000)
+        train, val, test, y_train, _, _ = self._train_test_split(_index=5000)
         print('Size of train, validation and test set:\n')
         print(train.shape)
         print(val.shape)
         print(test.shape)
         print('Sample data:\n')
-        print(train[:10])
+        # print(train[:10])
+        print(y_train.shape)
         return
 
     def build_network(self, session, n_h1, n_h2, n_output):
@@ -127,7 +128,7 @@ class MNISTDENSE():
             training_op = optimizer.apply_gradients(clipped_grads)
 
         with tf.name_scope('accuracy'):
-            correct = tf.equal(tf.argmax(logits, 1), y)
+            correct = tf.equal(tf.argmax(tf.nn.softmax(logits), 1), y)
             accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
 
         x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_test_split()
@@ -153,6 +154,7 @@ def main():
 
     with tf.Session() as session:
         mnist = MNISTDENSE(session, 'mnist', 28, 0.01, 64, 10)
+        mnist.check_sample_data()
         mnist.build_network(session, n_h1=25, n_h2=25, n_output=10)
 
 
