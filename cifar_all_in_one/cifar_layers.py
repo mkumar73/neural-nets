@@ -67,8 +67,9 @@ class CIFAR10():
         """
         self._load_data('cifar')
 
-        self.x_train = self.x_train.astype(np.float32) # /255.0
-        self.x_test = self.x_test.astype(np.float32) # /255.0
+        # to keep the pixel value between 0 and 1
+        self.x_train = self.x_train.astype(np.float32)/255.0
+        self.x_test = self.x_test.astype(np.float32)/255.0
 
         self.y_train = self.y_train.astype(np.int64)
         self.y_test = self.y_test.astype(np.int64)
@@ -76,7 +77,7 @@ class CIFAR10():
 
     def _train_val_split(self, _index=5000):
         """
-
+        # split the data and also reshape the label as vectors instead of 1D array
         :param _index: index for slicing
         :return: training, validation and test set data
         """
@@ -165,6 +166,7 @@ class CIFAR10():
         :return:
         """
 
+        # Network building
         with tf.name_scope('input'):
             X = tf.placeholder(tf.float32, shape=[None, 32, 32, 3], name='input')
             y = tf.placeholder(tf.int64, shape=[None], name='label')
@@ -175,31 +177,43 @@ class CIFAR10():
             init = tf.truncated_normal_initializer(stddev=0.01)
 
         with tf.name_scope('conv1'):
-            conv1 = tf.layers.conv2d(X, filters=16, kernel_size=(3,3), strides=(1,1), padding='same', kernel_initializer=init)
+            conv1 = tf.layers.conv2d(X, filters=32, kernel_size=(3, 3), strides=(1, 1),
+                                     padding='same', kernel_initializer=init, name='conv1')
             tf.summary.histogram('conv1', conv1)
 
-            pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=(2,2), strides=(2,2), name='pool1')
-            tf.summary.histogram('pool1', pool1)
+            # pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=(2, 2), strides=(2, 2), name='pool1')
+            # tf.summary.histogram('pool1', pool1)
 
         with tf.name_scope('conv2'):
-            conv2 = tf.layers.conv2d(pool1, filters=32, kernel_size=(3,3), strides=(1,1), padding='same', kernel_initializer=init)
+            conv2 = tf.layers.conv2d(conv1, filters=32, kernel_size=(3, 3), strides=(1, 1),
+                                     padding='same', kernel_initializer=init, name='conv2')
             tf.summary.histogram('conv2', conv2)
 
-            pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=(2,2), strides=(2,2), name='pool2')
+            pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=(2, 2), strides=(2, 2), name='pool2')
             tf.summary.histogram('pool2', pool2)
 
-        # with tf.name_scope('conv3'):
-        #     conv3 = tf.layers.conv2d(X, filters=32, kernel_size=(3,3), strides=(1,1), padding='same', kernel_initializer=init)
-        #     tf.summary.histogram('conv3', conv3)
-        #
-        #     pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=(2,2), strides=(2,2), name='pool2')
-        #     tf.summary.histogram('pool2', pool2)
+        with tf.name_scope('conv3'):
+            conv3 = tf.layers.conv2d(pool2, filters=64, kernel_size=(3, 3), strides=(1, 1),
+                                     padding='same', kernel_initializer=init, name='conv3')
+            tf.summary.histogram('conv3', conv3)
+
+            # pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=(2, 2), strides=(2, 2), name='pool1')
+            # tf.summary.histogram('pool1', pool1)
+
+        with tf.name_scope('conv4'):
+            conv4 = tf.layers.conv2d(conv3, filters=64, kernel_size=(3, 3), strides=(1, 1),
+                                     padding='same', kernel_initializer=init, name='conv4')
+            tf.summary.histogram('conv4', conv4)
+
+            pool4 = tf.layers.max_pooling2d(inputs=conv4, pool_size=(2, 2), strides=(2, 2), name='pool4')
+            tf.summary.histogram('pool2', pool2)
 
         with tf.name_scope('flatten'):
-            fc_input = tf.layers.flatten(pool2)
+            fc_input = tf.layers.flatten(pool4)
 
         with tf.name_scope('fc'):
-            fc = tf.layers.dense(inputs=fc_input, units=64, activation=tf.nn.relu, kernel_initializer=init, name='fc1')
+            fc = tf.layers.dense(inputs=fc_input, units=64, activation=tf.nn.relu,
+                                 kernel_initializer=init, name='fc1')
             tf.summary.histogram('fc', fc)
 
         with tf.name_scope('logit'):
@@ -232,6 +246,7 @@ class CIFAR10():
                 optimizer = tf.train.RMSPropOptimizer(learning_rate=self.lr).minimize(cost)
             else:
                 optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.lr).minimize(cost)
+        # Network build ends
 
         # training process started
         x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_val_split()
@@ -250,7 +265,6 @@ class CIFAR10():
 
         for epoch in range(self.epochs):
             for x_batch, y_batch in self.shuffle_batch(x_train, y_train, self.batch_size):
-                # y_batch = y_batch.reshape(-1,)
                 _, s = self.session.run([optimizer, summ], feed_dict={X: x_batch, y: y_batch})
 
             batch_accuracy = self.session.run(accuracy, feed_dict={X: x_batch, y: y_batch})
