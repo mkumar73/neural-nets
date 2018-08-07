@@ -25,9 +25,9 @@ with g3.as_default() as g3:
     X_batch = np.array([
         # t = 0      # t = 1    # t = 3
         [[0, 1, 2], [9, 8, 7], [2, 3, 4]], # instance = 1
-        [[3, 4, 5], [0, 0, 0], [6, 7, 9]], # instance = 1
-        [[6, 7, 8], [6, 5, 4], [5, 7, 8]], # instance = 1
-        [[9, 0, 1], [3, 2, 1], [1, 2, 1]]  # instance = 1
+        [[3, 4, 5], [0, 0, 0], [6, 7, 9]], # instance = 2
+        [[6, 7, 8], [6, 5, 4], [5, 7, 8]], # instance = 3
+        [[9, 0, 1], [3, 2, 1], [1, 2, 1]]  # instance = 4
     ])
 
 
@@ -35,10 +35,14 @@ with tf.Session(graph=g3) as session:
     writer = tf.summary.FileWriter(LOGDIR)
     writer.add_graph(session.graph)
     init.run()
-    output_val = session.run(output, feed_dict={X: X_batch})
+    output_val, cell_value = session.run([output, cell_state], feed_dict={X: X_batch})
 
 print('----------------------------------')
 print('Output_val for the packaged inputs:\n', output_val)
 print('Shape of Output_val:\n', output_val.shape)
 print()
+print('Cell state value:\n', cell_value)
+print('Cell state shape:\n', cell_value.shape)
+print()
+
 
