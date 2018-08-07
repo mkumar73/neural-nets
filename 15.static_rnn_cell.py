@@ -17,12 +17,12 @@ n_neurons = 5
 g3 = tf.Graph()
 with g3.as_default() as g3:
     X = tf.placeholder(dtype=tf.float32, shape=[None, n_steps, n_inputs])
-    X_seqs = tf.unstack(tf.transpose(X, perm=[1,0,2]))
+    X_seqs = tf.unstack(tf.transpose(X, perm=[1, 0, 2]))
 
     basic_rnn_cell = tf.contrib.rnn.BasicRNNCell(num_units=n_neurons)
     output_seq, cell_state = tf.contrib.rnn.static_rnn(basic_rnn_cell, X_seqs, dtype=tf.float32)
 
-    output = tf.transpose(tf.stack(output_seq), perm=[1,0,2])
+    output = tf.transpose(tf.stack(output_seq), perm=[1, 0, 2])
 
     init = tf.global_variables_initializer()
     X_batch = np.array([
@@ -41,7 +41,8 @@ with tf.Session(graph=g3) as session:
     output_val = session.run(output, feed_dict={X: X_batch})
 
 print('----------------------------------')
-print('Output_val for the packaged inputs:\n',output_val)
+print('Output_val for the packaged inputs:\n', output_val)
 print('Shape of Output_val:\n', output_val.shape)
 print()
 print(np.transpose(output_val, axes=[1, 0, 2])[1])
+
