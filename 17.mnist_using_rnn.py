@@ -68,6 +68,8 @@ class RnnMnist():
         :param _index:
         :return:
         """
+        self._data_preprocessing()
+
         x_train, x_validation = self.x_train[_index:], self.x_train[:_index]
         y_train, y_validation = self.y_train[_index:], self.y_train[:_index]
         x_test, y_test = self.x_test, self.y_test
@@ -84,7 +86,7 @@ class RnnMnist():
         rnd_idx = np.random.permutation(len(x))
         n_batches = len(x) // batch_size
         for batch in np.array_split(rnd_idx, n_batches):
-            x_batch, y_batch = x[batch, :, :, :], y[batch]
+            x_batch, y_batch = x[batch], y[batch]
             yield x_batch, y_batch
 
     def rnn_network(self):
@@ -99,7 +101,7 @@ class RnnMnist():
             y = tf.placeholder(dtype=tf.int64, shape=[None], name='label')
 
         with tf.name_scope('rnn_cell'):
-            basic_cell = tf.contrib.rnn.BasicRNNCell(n_units=self.n_rnn_cell)
+            basic_cell = tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell)
             output, cell_state = tf.nn.dynamic_rnn(basic_cell, X, dtype=tf.float32)
 
         with tf.name_scope('fc'):
@@ -123,28 +125,28 @@ class RnnMnist():
         x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_validation_split()
 
         # training process started
-        tf.reset_default_graph()
         init = tf.global_variables_initializer()
 
         self.session.run(init)
 
-        summ = self.session.merge_all()
+        summ = tf.summary.merge_all()
         writer = tf.summary.FileWriter(LOGDIR, self.session.graph)
         saver = tf.train.Saver()
 
+        print('Training process started:........')
         for epoch in range(self.epochs):
             for x_batch, y_batch in self.next_batch(x_train, y_train, self.batch_size):
                 x_batch = x_batch.reshape((-1, self.n_steps, self.n_inputs))
-                _, _, loss_value = self.session.run([summ, optimizer, loss],
+                s, _, loss_value = self.session.run([summ, optimizer, loss],
                                                     feed_dict={X: x_batch, y: y_batch})
 
             batch_accuracy = self.session.run(accuracy, feed_dict={X: x_batch, y: y_batch})
             x_validation = x_validation.reshape((-1, self.n_steps, self.n_inputs))
-            val_accuracy = self.session.runs(accuracy, feed_dict={X: x_validation, y: y_validation})
+            val_accuracy = self.session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
 
-            print('Epoch:{}, Batch Accuracy:{}, Validation Accuracy:{}',format(epoch, batch_accuracy, val_accuracy))
+            print('Epoch:{0}, Batch Accuracy:{1}, Validation Accuracy:{2}'.format(epoch+1, batch_accuracy, val_accuracy))
 
-            writer.add_summary(summ, epoch)
+            writer.add_summary(s, epoch)
 
             if epoch == self.epochs-1:
                 saver.save(self.session, os.path.join(LOGDIR, 'model.ckpt'), epoch)
@@ -153,9 +155,10 @@ class RnnMnist():
 
 
 def main():
+    tf.reset_default_graph()
 
     with tf.Session() as session:
-        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=75)
+        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=75, epochs=5)
         rnn_mnist.rnn_network()
 
 if __name__=='__main__':
