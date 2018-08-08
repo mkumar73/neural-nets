@@ -10,16 +10,14 @@ import os
 LOGDIR = "graphs/rnn/mnist"
 
 
-class RnnMnist():
+class RnnMnist:
 
     def __init__(self, session: tf.Session(), data='mnist', n_rnn_cell=75,
                  lr=0.001, epochs=5, batch_size=128):
         """
 
         :param session:
-        :param dataset:
-        :param n_inputs:
-        :param n_steps:
+        :param data:
         :param n_rnn_cell:
         :param lr:
         :param epochs:
@@ -35,14 +33,12 @@ class RnnMnist():
         self.batch_size = batch_size
         self.n_classes = 10
 
-
-
     def _load_data(self):
         """
 
         :return:
         """
-        if self.data=='mnist':
+        if self.data == 'mnist':
             (self.x_train, self.y_train), (self.x_test, self.y_test) = tf.keras.datasets.mnist.load_data()
         else:
             logging.error('Enter the correct name for the dataset..!!')
@@ -156,9 +152,9 @@ class RnnMnist():
             val_top1, val_top2, val_loss = self.session.run([top1_accuracy, top2_accuracy, loss],
                                                             feed_dict={X: x_validation, y: y_validation})
 
-            print('Epoch:{0}, batch_top1_acc:{1}, batch_top2_acc:{2}, loss:{3}'\
+            print('Epoch:{0}, batch_top1_acc:{1}, batch_top2_acc:{2}, loss:{3}'
                   .format(epoch+1, batch_top1, batch_top2, batch_loss))
-            print('Epoch:{0}, val_top1_acc:{1}, val_top2_acc:{2}, loss:{3}'\
+            print('Epoch:{0}, val_top1_acc:{1}, val_top2_acc:{2}, loss:{3}'
                   .format(epoch+1, batch_top1, batch_top2, val_loss))
 
             if epoch == self.epochs-1:
@@ -174,6 +170,7 @@ def main():
         rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=75, epochs=5)
         rnn_mnist.rnn_network()
 
-if __name__=='__main__':
-    main()
 
+if __name__ == '__main__':
+
+    main()
