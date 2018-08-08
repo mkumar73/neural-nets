@@ -96,7 +96,7 @@ class RnnMnist:
             X = tf.placeholder(dtype=tf.float32, shape=[None, self.n_steps, self.n_inputs], name='input')
             y = tf.placeholder(dtype=tf.int64, shape=[None], name='label')
 
-        with tf.name_scope('rnn_cell'):
+        with tf.variable_scope('rnn', initializer=tf.contrib.layers.xavier_initializer()):
             basic_cell = tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell)
             output, cell_state = tf.nn.dynamic_rnn(basic_cell, X, dtype=tf.float32)
             tf.summary.histogram('cell state', cell_state)
@@ -123,6 +123,9 @@ class RnnMnist:
             top2_accuracy = tf.reduce_mean(tf.cast(top2_pred, tf.float32))
             tf.summary.scalar('top2 accuracy', top2_accuracy)
 
+        # print all trainable variables
+        for i in tf.trainable_variables():
+            print(i)
         # build process completed
 
         # load the data
@@ -167,7 +170,7 @@ def main():
     tf.reset_default_graph()
 
     with tf.Session() as session:
-        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=75, epochs=5)
+        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=100, epochs=10)
         rnn_mnist.rnn_network()
 
 
