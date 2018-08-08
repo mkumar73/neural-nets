@@ -12,7 +12,7 @@ LOGDIR = "graphs/rnn/mnist"
 
 class RnnMnist():
 
-    def __init__(self, session:tf.Session(), dataset='mnist', n_rnn_cell=75,
+    def __init__(self, session: tf.Session(), data='mnist', n_rnn_cell=75,
                  lr=0.001, epochs=5, batch_size=128):
         """
 
@@ -25,14 +25,16 @@ class RnnMnist():
         :param epochs:
         :param batch_size:
         """
-        self.dataset = dataset.lower()
+        self.session = session
+        self.data = data.lower()
         self.n_inputs = 28
         self.n_steps = 28
         self.n_rnn_cell = n_rnn_cell
-        self.lr =lr
+        self.lr = lr
         self.epochs = epochs
         self.batch_size = batch_size
         self.n_classes = 10
+
 
 
     def _load_data(self):
@@ -40,14 +42,17 @@ class RnnMnist():
 
         :return:
         """
-        if self.dataset=='mnist':
+        if self.data=='mnist':
             (self.x_train, self.y_train), (self.x_test, self.y_test) = tf.keras.datasets.mnist.load_data()
         else:
             logging.error('Enter the correct name for the dataset..!!')
         return
 
     def _data_preprocessing(self):
+        """
 
+        :return:
+        """
         self._load_data()
 
         self.x_train = self.x_train.astype(np.float32)/255.0
@@ -141,7 +146,7 @@ class RnnMnist():
 
             writer.add_summary(summ, epoch)
 
-            if epoch==self.epochs-1:
+            if epoch == self.epochs-1:
                 saver.save(self.session, os.path.join(LOGDIR, 'model.ckpt'), epoch)
 
             return
@@ -150,7 +155,7 @@ class RnnMnist():
 def main():
 
     with tf.Session() as session:
-        rnn_mnist = RnnMnist(session, dataset='mnist', n_rnn_cell=75)
+        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=75)
         rnn_mnist.rnn_network()
 
 if __name__=='__main__':
