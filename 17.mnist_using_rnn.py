@@ -199,7 +199,7 @@ def main():
     tf.reset_default_graph()
 
     with tf.Session() as session:
-        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=100, epochs=10, testing=True)
+        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=100, lr=0.0001, epochs=10, testing=True)
         rnn_mnist.rnn_network()
 
 
