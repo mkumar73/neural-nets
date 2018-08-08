@@ -1,5 +1,8 @@
 """
-mnist digit classification using rnn dyanamic cell
+mnist digit classification using
+1. rnn dyanamic cell
+2. He initialization
+3. Dropout
 """
 
 import tensorflow as tf
@@ -13,7 +16,7 @@ LOGDIR = "graphs/rnn/mnist"
 class RnnMnist:
 
     def __init__(self, session: tf.Session(), data='mnist', n_rnn_cell=75,
-                 lr=0.001, epochs=5, batch_size=128):
+                 lr=0.001, epochs=5, batch_size=128, testing=False):
         """
 
         :param session:
@@ -32,6 +35,7 @@ class RnnMnist:
         self.epochs = epochs
         self.batch_size = batch_size
         self.n_classes = 10
+        self.testing = testing
 
     def _load_data(self):
         """
@@ -98,14 +102,14 @@ class RnnMnist:
 
         with tf.variable_scope('rnn', initializer=tf.contrib.layers.xavier_initializer()):
             basic_cell = tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell)
-            dropout_cell = tf.nn.rnn_cell.DropoutWrapper(basic_cell, output_keep_prob=0.7)
+            dropout_cell = tf.contrib.rnn.DropoutWrapper(basic_cell, output_keep_prob=0.5)
             output, cell_state = tf.nn.dynamic_rnn(dropout_cell, X, dtype=tf.float32)
             tf.summary.histogram('cell state', cell_state)
             tf.summary.histogram('rnn output', output)
 
         with tf.name_scope('fc'):
             logit = tf.layers.dense(inputs=cell_state, units=self.n_classes, activation=None, name='logit')
-            tf.summary.histogram('logits', logit)
+            tf.summary.histogram('logit', logit)
 
         with tf.name_scope('cost'):
             entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logit)
@@ -164,6 +168,30 @@ class RnnMnist:
             if epoch == self.epochs-1:
                 saver.save(self.session, os.path.join(LOGDIR, 'model.ckpt'), epoch)
 
+        if self.testing:
+            with tf.Session() as session:
+                saver = tf.train.Saver()
+                saver.restore(session, tf.train.latest_checkpoint(LOGDIR))
+
+                count = 0
+                iterations = 5
+                test_top1_acc = []
+                test_top2_acc = []
+                test_cost = []
+                for _iter in range(iterations):
+                    x_test = x_test.reshape((-1, self.n_steps, self.n_inputs))
+                    top1_test_acc, top2_test_acc, test_loss\
+                        = session.run([top1_accuracy, top2_accuracy, loss], feed_dict={X: x_test, y: y_test})
+                    test_top1_acc.append(top1_test_acc)
+                    test_top2_acc.append(top2_test_acc)
+                    test_cost.append(test_loss)
+                    count += 1
+
+            # print cost and accuracy calculated for test set
+            print("top1_test_accuracy:{} ".format(np.sum(test_top1_acc) / count))
+            print("top2_test_accuracy:{} ".format(np.sum(test_top2_acc) / count))
+            print("average test loss:{} ".format(np.sum(test_cost) / count))
+
         return
 
 
@@ -171,7 +199,7 @@ def main():
     tf.reset_default_graph()
 
     with tf.Session() as session:
-        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=100, epochs=10)
+        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=100, epochs=10, testing=True)
         rnn_mnist.rnn_network()
 
 
