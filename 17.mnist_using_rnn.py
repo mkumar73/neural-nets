@@ -98,7 +98,8 @@ class RnnMnist:
 
         with tf.variable_scope('rnn', initializer=tf.contrib.layers.xavier_initializer()):
             basic_cell = tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell)
-            output, cell_state = tf.nn.dynamic_rnn(basic_cell, X, dtype=tf.float32)
+            dropout_cell = tf.nn.rnn_cell.DropoutWrapper(basic_cell, output_keep_prob=0.7)
+            output, cell_state = tf.nn.dynamic_rnn(dropout_cell, X, dtype=tf.float32)
             tf.summary.histogram('cell state', cell_state)
             tf.summary.histogram('rnn output', output)
 
