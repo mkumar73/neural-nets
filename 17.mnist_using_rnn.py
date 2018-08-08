@@ -103,9 +103,12 @@ class RnnMnist():
         with tf.name_scope('rnn_cell'):
             basic_cell = tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell)
             output, cell_state = tf.nn.dynamic_rnn(basic_cell, X, dtype=tf.float32)
+            tf.summary.histogram('cell state', cell_state)
+            tf.summary.histogram('rnn output', output)
 
         with tf.name_scope('fc'):
             logit = tf.layers.dense(inputs=cell_state, units=self.n_classes, activation=None, name='logit')
+            tf.summary.histogram('logits', logit)
 
         with tf.name_scope('cost'):
             entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logit)
@@ -116,9 +119,14 @@ class RnnMnist():
             optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
 
         with tf.name_scope('accuracy'):
-            prediction = tf.nn.in_top_k(logit, y, 1)
-            accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
-            tf.summary.scalar('accuracy', accuracy)
+            top1_pred = tf.nn.in_top_k(logit, y, 1)
+            top1_accuracy = tf.reduce_mean(tf.cast(top1_pred, tf.float32))
+            tf.summary.scalar('top1 accuracy', top1_accuracy)
+
+            top2_pred = tf.nn.in_top_k(logit, y, 2)
+            top2_accuracy = tf.reduce_mean(tf.cast(top2_pred, tf.float32))
+            tf.summary.scalar('top2 accuracy', top2_accuracy)
+
         # build process completed
 
         # load the data
@@ -139,19 +147,24 @@ class RnnMnist():
                 x_batch = x_batch.reshape((-1, self.n_steps, self.n_inputs))
                 s, _, loss_value = self.session.run([summ, optimizer, loss],
                                                     feed_dict={X: x_batch, y: y_batch})
+                # add summary for every iteration
+                writer.add_summary(s, epoch)
 
-            batch_accuracy = self.session.run(accuracy, feed_dict={X: x_batch, y: y_batch})
+            batch_top1, batch_top2, batch_loss = self.session.run([top1_accuracy, top2_accuracy, loss],
+                                                                  feed_dict={X: x_batch, y: y_batch})
             x_validation = x_validation.reshape((-1, self.n_steps, self.n_inputs))
-            val_accuracy = self.session.run(accuracy, feed_dict={X: x_validation, y: y_validation})
+            val_top1, val_top2, val_loss = self.session.run([top1_accuracy, top2_accuracy, loss],
+                                                            feed_dict={X: x_validation, y: y_validation})
 
-            print('Epoch:{0}, Batch Accuracy:{1}, Validation Accuracy:{2}'.format(epoch+1, batch_accuracy, val_accuracy))
-
-            writer.add_summary(s, epoch)
+            print('Epoch:{0}, batch_top1_acc:{1}, batch_top2_acc:{2}, loss:{3}'\
+                  .format(epoch+1, batch_top1, batch_top2, batch_loss))
+            print('Epoch:{0}, val_top1_acc:{1}, val_top2_acc:{2}, loss:{3}'\
+                  .format(epoch+1, batch_top1, batch_top2, val_loss))
 
             if epoch == self.epochs-1:
                 saver.save(self.session, os.path.join(LOGDIR, 'model.ckpt'), epoch)
 
-            return
+        return
 
 
 def main():
@@ -163,17 +176,4 @@ def main():
 
 if __name__=='__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
 
