@@ -5,16 +5,18 @@ mnist digit classification using rnn dyanamic cell
 import tensorflow as tf
 import numpy as np
 import logging
+import os
 
 LOGDIR = "graphs/rnn/mnist"
 
 
 class RnnMnist():
 
-    def __init__(self, dataset='mnist', n_inputs=28, n_steps=28, n_rnn_cell=75,
+    def __init__(self, session:tf.Session(), dataset='mnist', n_rnn_cell=75,
                  lr=0.001, epochs=5, batch_size=128):
         """
 
+        :param session:
         :param dataset:
         :param n_inputs:
         :param n_steps:
@@ -24,12 +26,13 @@ class RnnMnist():
         :param batch_size:
         """
         self.dataset = dataset.lower()
-        self.n_inputs = n_inputs
-        self.n_steps = n_steps
+        self.n_inputs = 28
+        self.n_steps = 28
         self.n_rnn_cell = n_rnn_cell
         self.lr =lr
         self.epochs = epochs
         self.batch_size = batch_size
+        self.n_classes = 10
 
 
     def _load_data(self):
@@ -85,9 +88,83 @@ class RnnMnist():
         :return:
         """
 
+        # build the network
         with tf.name_scope('input'):
             X = tf.placeholder(dtype=tf.float32, shape=[None, self.n_steps, self.n_inputs], name='input')
             y = tf.placeholder(dtype=tf.int64, shape=[None], name='label')
+
+        with tf.name_scope('rnn_cell'):
+            basic_cell = tf.contrib.rnn.BasicRNNCell(n_units=self.n_rnn_cell)
+            output, cell_state = tf.nn.dynamic_rnn(basic_cell, X, dtype=tf.float32)
+
+        with tf.name_scope('fc'):
+            logit = tf.layers.dense(inputs=cell_state, units=self.n_classes, activation=None, name='logit')
+
+        with tf.name_scope('cost'):
+            entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logit)
+            loss = tf.reduce_mean(entropy)
+            tf.summary.scalar('loss', loss)
+
+        with tf.name_scope('optimizer'):
+            optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
+
+        with tf.name_scope('accuracy'):
+            prediction = tf.nn.in_top_k(logit, y, 1)
+            accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
+            tf.summary.scalar('accuracy', accuracy)
+        # build process completed
+
+        # load the data
+        x_train, x_validation, x_test, y_train, y_validation, y_test = self._train_validation_split()
+
+        # training process started
+        tf.reset_default_graph()
+        init = tf.global_variables_initializer()
+
+        self.session.run(init)
+
+        summ = self.session.merge_all()
+        writer = tf.summary.FileWriter(LOGDIR, self.session.graph)
+        saver = tf.train.Saver()
+
+        for epoch in range(self.epochs):
+            for x_batch, y_batch in self.next_batch(x_train, y_train, self.batch_size):
+                x_batch = x_batch.reshape((-1, self.n_steps, self.n_inputs))
+                _, _, loss_value = self.session.run([summ, optimizer, loss],
+                                                    feed_dict={X: x_batch, y: y_batch})
+
+            batch_accuracy = self.session.run(accuracy, feed_dict={X: x_batch, y: y_batch})
+            x_validation = x_validation.reshape((-1, self.n_steps, self.n_inputs))
+            val_accuracy = self.session.runs(accuracy, feed_dict={X: x_validation, y: y_validation})
+
+            print('Epoch:{}, Batch Accuracy:{}, Validation Accuracy:{}',format(epoch, batch_accuracy, val_accuracy))
+
+            writer.add_summary(summ, epoch)
+
+            if epoch==self.epochs-1:
+                saver.save(self.session, os.path.join(LOGDIR, 'model.ckpt'), epoch)
+
+            return
+
+
+def main():
+
+    with tf.Session() as session:
+        rnn_mnist = RnnMnist(session, dataset='mnist', n_rnn_cell=75)
+        rnn_mnist.rnn_network()
+
+if __name__=='__main__':
+    main()
+
+
+
+
+
+
+
+
+
+
 
 
 
