@@ -3,7 +3,7 @@ mnist digit classification using
 1. Multi later rnn
 2. rnn dyanamic cell
 3. Xavier initialization
-3. Dropout
+3. No Dropout
 """
 
 import tensorflow as tf
@@ -17,7 +17,7 @@ LOGDIR = "graphs/rnn/mnist_multi"
 class RnnMnist:
 
     def __init__(self, session: tf.Session(), data='mnist', n_rnn_cell=75,
-                 lr=0.001, epochs=5, batch_size=128, testing=False):
+                 n_layers=3, lr=0.001, epochs=5, batch_size=128, testing=False):
         """
 
         :param session:
@@ -32,6 +32,7 @@ class RnnMnist:
         self.n_inputs = 28
         self.n_steps = 28
         self.n_rnn_cell = n_rnn_cell
+        self.n_layers = n_layers
         self.lr = lr
         self.epochs = epochs
         self.batch_size = batch_size
@@ -102,14 +103,21 @@ class RnnMnist:
             y = tf.placeholder(dtype=tf.int64, shape=[None], name='label')
 
         with tf.variable_scope('rnn', initializer=tf.contrib.layers.xavier_initializer()):
-            basic_cell = tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell)
-            dropout_cell = tf.contrib.rnn.DropoutWrapper(basic_cell, output_keep_prob=0.7)
-            output, cell_state = tf.nn.dynamic_rnn(dropout_cell, X, dtype=tf.float32)
+
+            layers = [tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell, activation=tf.nn.relu)
+                      for layer in range(self.n_layers)]
+            multi_layer = tf.contrib.rnn.MultiRNNCell(layers)
+
+            # dropout_cell = tf.contrib.rnn.DropoutWrapper(basic_cell, output_keep_prob=0.7)
+
+            output, cell_state = tf.nn.dynamic_rnn(multi_layer, X, dtype=tf.float32)
+            concat_states = tf.concat(axis=1, values=cell_state)
+
             tf.summary.histogram('cell state', cell_state)
             tf.summary.histogram('rnn output', output)
 
         with tf.name_scope('fc'):
-            logit = tf.layers.dense(inputs=cell_state, units=self.n_classes, activation=None, name='logit')
+            logit = tf.layers.dense(inputs=concat_states, units=self.n_classes, activation=None, name='logit')
             tf.summary.histogram('logit', logit)
 
         with tf.name_scope('cost'):
@@ -200,7 +208,8 @@ def main():
     tf.reset_default_graph()
 
     with tf.Session() as session:
-        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=100, lr=0.0001, epochs=10, testing=True)
+        rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=100, n_layers=3,
+                             lr=0.0001, epochs=10, testing=True)
         rnn_mnist.rnn_network()
 
 
