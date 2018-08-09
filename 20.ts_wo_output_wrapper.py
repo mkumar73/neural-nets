@@ -17,17 +17,23 @@ n_inputs = 1
 n_outputs = 1
 n_steps = 20
 n_neurons = 200
-lr = 0.0001
+lr = 0.001
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, n_steps, n_inputs], name='input')
 y = tf.placeholder(dtype=tf.float32, shape=[None, n_steps, n_outputs], name='output')
 
 # basic RNN cell
 cell = tf.contrib.rnn.BasicRNNCell(num_units=n_neurons, activation=tf.nn.relu)
-# OutputProjectionWrapper used to control #output units for each RNN cell at each time step
-out_wrapper_cell = tf.contrib.rnn.OutputProjectionWrapper(cell, output_size=n_outputs)
-# normal dynamic rnn cell for output and cell state
-output, cell_state = tf.nn.dynamic_rnn(cell=out_wrapper_cell, inputs=X, dtype=tf.float32)
+# without wrapper, normal dynamic rnn cell for output and cell state
+output_rnn, cell_state = tf.nn.dynamic_rnn(cell=cell, inputs=X, dtype=tf.float32)
+
+# stacked layer on top of RNN
+# reshape the stacked output to add a single fully connected layer
+# reshape to [batch_size*n_steps, n_neurons]
+stacked_rnn_op = tf.reshape(output_rnn, [-1, n_neurons])
+fc_stacked_op = tf.layers.dense(inputs=stacked_rnn_op, units=n_outputs, activation=None)
+# output from the fc layer, reshape back to [batch_size, n_steps, n_outputs]
+output = tf.reshape(fc_stacked_op, [-1, n_steps, n_outputs])
 
 loss = tf.reduce_mean(tf.square(output-y))
 optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)
@@ -104,7 +110,7 @@ with tf.Session() as session:
     y_pred = session.run(output, feed_dict={X: x_new})
 
 inp_out = np.c_[x_new, y_pred]
-print('Input and output pair:\n'.format(inp_out))
+print('Input and output pair:\n', inp_out)
 
 plt.title("Model Prediction", fontsize=14)
 plt.plot(t_instance[:-1], time_series(t_instance[:-1]), "bo", markersize=10, label="instance")
@@ -115,3 +121,4 @@ plt.xlabel("Time")
 
 # save_fig("time_series_pred_plot")
 plt.show()
+
