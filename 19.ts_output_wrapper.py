@@ -18,7 +18,7 @@ n_inputs = 1
 n_outputs = 1
 n_steps = 20
 n_neurons = 200
-lr = 0.0001
+lr = 0.001
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, n_steps, n_inputs], name='input')
 y = tf.placeholder(dtype=tf.float32, shape=[None, n_steps, n_outputs], name='output')
@@ -105,7 +105,7 @@ with tf.Session() as session:
     y_pred = session.run(output, feed_dict={X: x_new})
 
 inp_out = np.c_[x_new, y_pred]
-print('Input and output pair:\n'.format(inp_out))
+print('Input and output pair:\n', inp_out)
 
 plt.title("Model Prediction", fontsize=14)
 plt.plot(t_instance[:-1], time_series(t_instance[:-1]), "bo", markersize=10, label="instance")
