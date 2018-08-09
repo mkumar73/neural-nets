@@ -104,7 +104,7 @@ with tf.Session() as session:
     x_new = time_series(np.array(t_instance[:-1].reshape(-1, n_steps, n_inputs)))
     y_pred = session.run(output, feed_dict={X: x_new})
 
-inp_out = np.c_(x_new, y_pred)
+inp_out = np.c_[x_new, y_pred]
 print('Input and output pair:\n'.format(inp_out))
 
 plt.title("Model Prediction", fontsize=14)
