@@ -9,13 +9,15 @@ requirement.
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
+LOGDIR = "graphs/rnn/ts_wrapper"
 
 # network structure
 n_inputs = 1
 n_outputs = 1
 n_steps = 20
-n_neurons = 100
+n_neurons = 200
 lr = 0.0001
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, n_steps, n_inputs], name='input')
@@ -76,4 +78,41 @@ plt.xlabel("Time")
 
 
 # training the network
+init = tf.global_variables_initializer()
+n_iterations = 1000
+batch_size = 64
 
+saver = tf.train.Saver()
+
+with tf.Session() as session:
+    session.run(init)
+    for iteration in range(n_iterations+1):
+        # call the next_batch function
+        # keep in mind, its not a generator
+        x_batch, y_batch = next_batch(batch_size, n_steps)
+        session.run(optimizer, feed_dict={X: x_batch, y: y_batch})
+
+        if iteration % 100 == 0:
+            mse_value = session.run(loss, feed_dict={X: x_batch, y: y_batch})
+            print('MSE for iteration: {}, is: {}'.format(iteration, mse_value))
+        if iteration == n_iterations:
+            saver.save(session, os.path.join(LOGDIR, 'model.ckpt'), iteration)
+
+
+with tf.Session() as session:
+    saver.restore(session, tf.train.latest_checkpoint(LOGDIR))
+    x_new = time_series(np.array(t_instance[:-1].reshape(-1, n_steps, n_inputs)))
+    y_pred = session.run(output, feed_dict={X: x_new})
+
+inp_out = np.c_(x_new, y_pred)
+print('Input and output pair:\n'.format(inp_out))
+
+plt.title("Model Prediction", fontsize=14)
+plt.plot(t_instance[:-1], time_series(t_instance[:-1]), "bo", markersize=10, label="instance")
+plt.plot(t_instance[1:], time_series(t_instance[1:]), "w*", markersize=10, label="target")
+plt.plot(t_instance[1:], y_pred[0, :, 0], "r.", markersize=10, label="prediction")
+plt.legend(loc="lower right")
+plt.xlabel("Time")
+
+# save_fig("time_series_pred_plot")
+plt.show()
