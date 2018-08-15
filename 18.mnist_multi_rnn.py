@@ -3,7 +3,7 @@ mnist digit classification using
 1. Multi later rnn
 2. rnn dyanamic cell
 3. Xavier initialization
-3. No Dropout
+3. Dropout
 """
 
 import tensorflow as tf
@@ -17,7 +17,7 @@ LOGDIR = "graphs/rnn/mnist_multi"
 class RnnMnist:
 
     def __init__(self, session: tf.Session(), data='mnist', n_rnn_cell=75,
-                 n_layers=3, lr=0.001, epochs=5, batch_size=128, testing=False):
+                 n_layers=3, lr=0.001, epochs=5, batch_size=128, is_testing=False, is_training=True):
         """
 
         :param session:
@@ -37,7 +37,8 @@ class RnnMnist:
         self.epochs = epochs
         self.batch_size = batch_size
         self.n_classes = 10
-        self.testing = testing
+        self.is_testing = is_testing
+        self.is_training = is_training
 
     def _load_data(self):
         """
@@ -106,9 +107,12 @@ class RnnMnist:
 
             layers = [tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell, activation=tf.nn.relu)
                       for layer in range(self.n_layers)]
-            multi_layer = tf.contrib.rnn.MultiRNNCell(layers)
 
-            # dropout_cell = tf.contrib.rnn.DropoutWrapper(basic_cell, output_keep_prob=0.7)
+            # dropout applied only during training not testing
+            if self.is_training and not self.is_testing:
+                layers = [tf.contrib.rnn.DropoutWrapper(layer, output_keep_prob=0.7) for layer in layers]
+
+            multi_layer = tf.contrib.rnn.MultiRNNCell(layers)
 
             output, cell_state = tf.nn.dynamic_rnn(multi_layer, X, dtype=tf.float32)
             concat_states = tf.concat(axis=1, values=cell_state)
@@ -177,7 +181,7 @@ class RnnMnist:
             if epoch == self.epochs-1:
                 saver.save(self.session, os.path.join(LOGDIR, 'model.ckpt'), epoch)
 
-        if self.testing:
+        if self.is_testing:
             with tf.Session() as session:
                 saver = tf.train.Saver()
                 saver.restore(session, tf.train.latest_checkpoint(LOGDIR))
@@ -209,7 +213,7 @@ def main():
 
     with tf.Session() as session:
         rnn_mnist = RnnMnist(session, data='mnist', n_rnn_cell=100, n_layers=3,
-                             lr=0.0001, epochs=10, testing=True)
+                             lr=0.001, epochs=10, is_testing=False, is_training=True)
         rnn_mnist.rnn_network()
 
 
