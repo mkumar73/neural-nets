@@ -60,7 +60,7 @@ t = np.linspace(t_min, t_max, int((t_max - t_min) / resolution))
 n_steps = 20
 t_instance = np.linspace(12.2, 12.2 + resolution * (n_steps + 1), n_steps + 1)
 
-plt.figure(figsize=(11,4))
+plt.figure(figsize=(11, 4))
 plt.subplot(121)
 plt.title("A time series (generated)", fontsize=14)
 plt.plot(t, time_series(t), label=r"$t . \sin(t) / 3 + 2 . \sin(5t)$")
