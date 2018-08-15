@@ -1,8 +1,9 @@
 """
 mnist digit classification using
-1. rnn dyanamic cell
-2. He initialization
+1. dynamic_rnn cell
+2. Xavier's initialization
 3. Dropout
+4. Top-1 and top-2 accuracy
 """
 
 import tensorflow as tf
@@ -45,7 +46,7 @@ class RnnMnist:
         if self.data == 'mnist':
             (self.x_train, self.y_train), (self.x_test, self.y_test) = tf.keras.datasets.mnist.load_data()
         else:
-            logging.error('Enter the correct name for the dataset..!!')
+            logging.error('Enter the correct name for the data set..!!')
         return
 
     def _data_preprocessing(self):
@@ -101,9 +102,13 @@ class RnnMnist:
             y = tf.placeholder(dtype=tf.int64, shape=[None], name='label')
 
         with tf.variable_scope('rnn', initializer=tf.contrib.layers.xavier_initializer()):
+            # get a basic RNN cell
             basic_cell = tf.contrib.rnn.BasicRNNCell(num_units=self.n_rnn_cell)
+            # add dropout
             dropout_cell = tf.contrib.rnn.DropoutWrapper(basic_cell, output_keep_prob=0.7)
+            # implement rnn using dynamic_rnn
             output, cell_state = tf.nn.dynamic_rnn(dropout_cell, X, dtype=tf.float32)
+
             tf.summary.histogram('cell state', cell_state)
             tf.summary.histogram('rnn output', output)
 
