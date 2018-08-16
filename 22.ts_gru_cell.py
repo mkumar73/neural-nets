@@ -24,7 +24,7 @@ X = tf.placeholder(dtype=tf.float32, shape=[None, n_steps, n_inputs], name='inpu
 y = tf.placeholder(dtype=tf.float32, shape=[None, n_steps, n_outputs], name='output')
 
 # basic RNN cell
-cell = tf.contrib.rnn.BasicRNNCell(num_units=n_neurons, activation=tf.nn.relu)
+cell = tf.contrib.rnn.GRUCell(num_units=n_neurons, activation=tf.nn.relu)
 # without wrapper, normal dynamic rnn cell for output and cell state
 output_rnn, cell_state = tf.nn.dynamic_rnn(cell=cell, inputs=X, dtype=tf.float32)
 
